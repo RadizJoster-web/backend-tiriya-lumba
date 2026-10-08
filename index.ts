@@ -1,15 +1,24 @@
-import express from "express"
-import type {Request, Response} from "express"
+import express from 'express';
+import cors from 'cors';
 
-const app = express()
-const port = 5000
+const app = express();
+const port = 5000;
 
 app.use(express.json());
 
-app.get("/", (req: Request, res: Response) => {
-    res.send("Hello World!")
-}   )
+app.use(
+  cors({
+    // Landing Page
+    origin: [
+      process.env.URL_LANDING_PAGE || 'http://localhost:3000',
+      process.env.URL_DASHBOARD_PAGE || 'http://localhost:5173',
+    ],
+    methods: ['GET', 'POST', 'PUT', 'DELETE'],
+    allowedHeaders: ['Content-Type', 'Authorization'],
+    credentials: true,
+  }),
+);
 
 app.listen(port, () => {
-    console.log(`Server is running on http://localhost:${port}`)
-})
+  console.log(`Server is running on http://localhost:${port}`);
+});
