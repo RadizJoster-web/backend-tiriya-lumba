@@ -1,7 +1,9 @@
-import express from 'express';
+import express, { response } from 'express';
 import cors from 'cors';
 import helmet from 'helmet';
 import dotenv from 'dotenv';
+
+import { globalRateLimit } from './src/middlewares/rateLimiter';
 
 dotenv.config();
 
@@ -14,6 +16,7 @@ app.use(
     crossOriginResourcePolicy: { policy: 'cross-origin' }, // Izinkan Frontend memuat aset gambar dari backend
   }),
 );
+app.use(globalRateLimit);
 
 app.use('/public', express.static('public'));
 
@@ -33,6 +36,10 @@ app.use(
 // Body Parser JSON & URL-Encoded (Membuat server bisa menerima req json dan url)
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
+
+app.get('/', (req, res) => {
+  res.json({ status: 'ok', message: 'Server PT Tirya Lumba berjalan aman!' });
+});
 
 app.listen(port, () => {
   console.log(`Server is running on http://localhost:${port}`);
