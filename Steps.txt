@@ -1,0 +1,174 @@
+================================================================================
+RENCANA KERJA HARIAN BACKEND ENGINEER - PT TIRYA LUMBA
+Tumpukan Teknologi: Node.js, Express.js, Prisma ORM, MySQL, JWT, Multer
+Durasi: 6 Minggu (30 Hari Kerja)
+================================================================================
+
+--------------------------------------------------------------------------------
+MINGGU 1: INISIALISASI PROYEK, DESAIN SISTEM & API CONTRACT
+Fokus: Setup awal, database schema, dan penyediaan dokumentasi untuk tim Frontend.
+--------------------------------------------------------------------------------
+Hari 1: Setup Proyek & Instalasi Dependensi Inti
+- Inisialisasi: `npm init -y`
+- Instalasi Core: `npm install express cors dotenv helmet express-rate-limit`
+- Instalasi Fitur: `npm install bcrypt jsonwebtoken multer zod`
+- Instalasi Dev: `npm install -D typescript @types/node @types/express ts-node nodemon prisma`
+- Setup file struktur dasar: `/src` (controllers, routes, middlewares, services, prisma).
+- Setup server dasar (`server.ts` atau `index.ts`) dengan port 5000.
+
+Hari 2: Translasi ERD ke Prisma Schema
+- Inisialisasi Prisma: `npx prisma init`
+- Buka `schema.prisma`, hubungkan ke MySQL (atur DATABASE_URL di `.env`).
+- Tulis seluruh ENUM (Role, PaymentMethod, RegistrationStatus, RegistrationType).
+- Tulis seluruh Model (User, Location, Package, SessionTime, StudentProfile, Registration, Schedule) sesuai dokumen Arsitektur.
+
+Hari 3: Database Migration & Seeding Dasar
+- Jalankan migrasi: `npx prisma migrate dev --name init`
+- Buat file `seed.ts` untuk membuat akun 'ADMIN' pusat pertama (Super Admin) agar kita bisa login ke dasbor nantinya.
+- Jalankan seeding database.
+
+Hari 4: Konfigurasi Keamanan & Middleware Global
+- Konfigurasi `cors` untuk mengizinkan domain Frontend 1 (Next.js) dan Frontend 2 (Vite).
+- Setup `helmet` untuk security headers.
+- Setup `express-rate-limit` (misal 100 request/15 menit) untuk mencegah spam API.
+- Buat Global Error Handler middleware untuk menangkap error dari Prisma atau aplikasi.
+
+Hari 5: Pembuatan API Contract (Mock API/Postman)
+- Dokumentasikan semua endpoint yang ada di dokumen arsitektur ke dalam Postman Collection atau Swagger.
+- Bagikan koleksi ini ke tim Frontend (Frontend 1 & 2) agar mereka bisa mulai *slicing* UI tanpa harus menunggu logikamu selesai 100%.
+
+--------------------------------------------------------------------------------
+MINGGU 2: SISTEM AUTENTIKASI, RBAC & HALAMAN MASTER DATA DASAR
+Fokus: Login, Register, Middleware Hak Akses, dan CRUD Master Data.
+--------------------------------------------------------------------------------
+Hari 6: API Autentikasi (Register & Verifikasi OTP)
+- Buat endpoint `POST /api/auth/register`.
+- Gunakan `zod` untuk memvalidasi payload (email harus valid, password minimal 8 karakter).
+- Implementasi logika *hashing* password dengan `bcrypt`.
+- Buat logika simulasi OTP (karena belum pakai layanan SMS berbayar, simpan OTP di tabel/cache lokal sementara dan return di response untuk tahap development).
+- Buat endpoint `POST /api/auth/verify-otp`.
+
+Hari 7: API Login & JWT Implementation
+- Buat endpoint `POST /api/auth/login`.
+- Cek email dan compare password dengan `bcrypt.compare`.
+- *Sign* JWT payload yang berisi `userId`, `role`, dan `locationId` (jika dia POOL_MANAGER).
+- Return JWT token ke klien.
+
+Hari 8: Middleware RBAC (Role-Based Access Control)
+- Buat `middleware/auth.ts` untuk memverifikasi JWT token dari header `Authorization`.
+- Buat middleware `requireCentralAdmin` (tolak jika role !== 'ADMIN').
+- Buat middleware `poolManagerScope` (inject `req.query.locationId = req.user.locationId` jika role === 'POOL_MANAGER') sesuai dokumen arsitektur.
+
+Hari 9: CRUD API Master Data - Lokasi & Paket
+- Buat endpoint CRUD `/api/admin/locations` (Dilindungi `requireCentralAdmin`).
+- Buat endpoint CRUD `/api/admin/packages` untuk mengatur harga per kolam.
+
+Hari 10: CRUD API Master Data - Sesi & Pengelola
+- Buat endpoint CRUD `/api/admin/sessions` (Atur waktu sesi global/lokal).
+- Buat endpoint CRUD `/api/admin/pool-managers` (Untuk Admin pusat membuat akun pengelola kolam).
+- Uji coba dengan Postman menggunakan token Admin.
+
+--------------------------------------------------------------------------------
+MINGGU 3: KATALOG PUBLIK, UPLOAD FILE & ANTREAN APPROVAL
+Fokus: Endpoint untuk Next.js (publik), sistem file, dan validasi pendaftaran.
+--------------------------------------------------------------------------------
+Hari 11: Endpoint Publik untuk Landing Page
+- Buat `GET /api/public/instructors` (Ambil data user dengan role INSTRUCTOR beserta profilnya).
+- Buat `GET /api/public/locations` beserta paket yang tersedia.
+- Pastikan endpoint ini *open* (tanpa JWT middleware).
+
+Hari 12: Setup Multer & Local Storage API
+- Buat endpoint `POST /api/upload`.
+- Konfigurasi `multer` untuk menyimpan ke folder lokal: `/public/uploads/receipts`, `/public/uploads/profiles`, `/public/uploads/cv`.
+- Terapkan limitasi ketat: Maksimal 5 file, per file maks 10MB.
+- Setup route publik di express: `app.use('/public', express.static('public'))` agar Next.js bisa menampilkan gambar.
+
+Hari 13: API Submission Booking (Status PENDING)
+- Buat `POST /api/bookings/students` (Pendaftaran murid, data masuk ke tabel `Registration` dengan status PENDING).
+- Buat `POST /api/bookings/instructors` (Pendaftaran pelatih).
+- Validasi URL foto, bukti bayar, dan CV yang didapat dari endpoint upload sebelumnya.
+
+Hari 14: API Antrean Dasbor (Dengan Filter RBAC)
+- Buat `GET /api/admin/registrations`.
+- Terapkan middleware `poolManagerScope`. Jika yang login Pengelola Kolam, query Prisma harus di-filter otomatis berdasarkan `locationId` mereka, sehingga mereka tidak melihat pendaftar kolam lain.
+
+Hari 15: API Eksekusi Approval/Reject
+- Buat `POST /api/admin/registrations/:id/approve`. Logika: Ubah status jadi APPROVED, lalu *insert* data ke tabel `StudentProfile` atau `InstructorProfile` dan update tabel `User`.
+- Buat `POST /api/admin/registrations/:id/reject`. Wajib menerima JSON `rejectionReason`.
+
+--------------------------------------------------------------------------------
+MINGGU 4: SISTEM BOOKING (VALIDASI JADWAL) & MANAJEMEN SISWA
+Fokus: Mencegah bentrok jadwal dan operasional dasbor harian.
+--------------------------------------------------------------------------------
+Hari 16: API Manajemen Ketersediaan Jadwal (Schedule)
+- Buat CRUD endpoint untuk tabel `Schedule` agar pelatih bisa *declare* ketersediaan waktu mereka, dan admin bisa melihatnya.
+
+Hari 17: Logika Anti-Bentrok Jadwal (Clash Validation) - Bagian 1
+- Revisi endpoint `POST /api/bookings/students`.
+- Tambahkan validasi: Sebelum murid berhasil *booking*, cek apakah `instructorId` di hari (`dayOfWeek`) dan sesi (`sessionName`) yang dipilih sudah terisi `studentId` lain di tabel `Schedule`. Tolak jika sudah penuh.
+
+Hari 18: Renewal (Perpanjangan Paket)
+- Buat `POST /api/bookings/renewal` untuk murid (via portal Next.js) memperpanjang paket mandiri saat `activeSessions` habis.
+- Buat `POST /api/admin/students/:id/renew` untuk Quick Renew offline oleh Pengelola Kolam di dasbor Vite.
+
+Hari 19: API Manajemen Siswa Dasbor
+- Buat `GET /api/admin/students`. Terapkan filter lokasi untuk Pengelola Kolam.
+- Sertakan relasi `activeSessions` dan data paket yang diambil.
+
+Hari 20: API Soft Delete Manual
+- Buat `PATCH /api/admin/students/:id/toggle-status`.
+- Ini digunakan jika murid tiba-tiba berhenti di tengah jalan dan admin ingin menonaktifkannya secara manual (ubah `isActive = false`).
+
+--------------------------------------------------------------------------------
+MINGGU 5: MODUL ABSENSI, RESCHEDULE, & TRANSAKSI OTOMATIS
+Fokus: Logika bisnis kompleks menggunakan Prisma Transaction.
+--------------------------------------------------------------------------------
+Hari 21: Setup API Pencatatan Absensi (Hadir/Tidak Hadir)
+- Buat `POST /api/admin/attendances`.
+- Pastikan hanya bisa diakses oleh POOL_MANAGER (atau ADMIN).
+
+Hari 22: Prisma Transaction untuk Sesi Otomatis & Soft Delete
+- Lanjutkan API Absensi.
+- Implementasikan `prisma.$transaction`.
+- Langkah 1: Catat kehadiran.
+- Langkah 2: Lakukan `decrement` pada `activeSessions` di profil murid.
+- Langkah 3: Jika `activeSessions` menjadi 0, update tabel User murid tersebut `isActive = false` secara otomatis dalam transaksi yang sama.
+
+Hari 23: Pengajuan Reschedule (Portal Pelatih)
+- Buat `POST /api/portal/reschedules`.
+- KRUSIAL: Tambahkan validasi database. Jika pelatih mencoba *reschedule* di hari/sesi di mana `studentId !== null` (dia ada jadwal mengajar murid), kembalikan error `400 Bad Request` sesuai spesifikasi dokumen.
+
+Hari 24: Eksekusi Reschedule (Dasbor Admin)
+- Buat API untuk Admin Pusat menyetujui pengajuan *reschedule* pelatih.
+- Jika disetujui, update record di tabel `Schedule`.
+
+Hari 25: API Statistik Dasbor Utama
+- Buat `GET /api/dashboard/summary?month=X&year=Y`.
+- Hitung total pendapatan bulanan, jumlah siswa aktif, dan metrik lainnya.
+- Hati-hati Memory Leak: Gunakan fitur agregasi Prisma (`prisma.registration.aggregate`, `prisma.studentProfile.count`), JANGAN menarik seluruh data (`findMany`) ke array Node.js lalu di-loop manual.
+
+--------------------------------------------------------------------------------
+MINGGU 6: PENGUJIAN, OPTIMASI, & DEPLOYMENT
+Fokus: Persiapan produksi, meminimalisir bug, dan penanganan resource server.
+--------------------------------------------------------------------------------
+Hari 26: Optimasi Database & Query
+- Konfigurasi parameter `connection_limit=5` pada connection string Prisma di `.env` (misal: `mysql://.../?connection_limit=5`) untuk menjaga server database lokal agar tidak kelebihan beban.
+- Rapikan struktur kode yang berulang.
+
+Hari 27: End-to-End API Testing (Postman)
+- Simulasikan alur penuh: Register Murid -> Upload Bukti -> Admin Approve -> Cek Jadwal -> Presensi 4 kali beruntun -> Cek status apakah otomatis non-aktif.
+
+Hari 28: Integrasi Lintas Repositori dengan Frontend
+- Lakukan *pair programming* dengan rekan Frontend 1 & 2.
+- Atasi bug CORS, token expired, atau format payload yang tidak sesuai antara klien dan server.
+
+Hari 29: Persiapan Environment Produksi
+- Setup `.env.production`.
+- Install `pm2` (`npm i -g pm2`) untuk menjaga server Node.js tetap berjalan di latar belakang (VPS).
+- Buat skrip cron job (atau pengingat manual SOP) untuk menghapus folder `/public/uploads/receipts` secara berkala setelah 1 tahun agar hard disk tidak penuh.
+
+Hari 30: Deployment & Final Review
+- Push kode versi stabil ke production branch.
+- Deploy database MySQL dan server Express.js ke VPS / Cloud Provider.
+- Pastikan folder `/public/uploads` di server production memiliki hak akses *read-write* yang benar.
+- Ucapkan selamat kepada tim, API sudah siap digunakan sepenuhnya!
