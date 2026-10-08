@@ -1,14 +1,25 @@
 import express from 'express';
 import cors from 'cors';
+import helmet from 'helmet';
+import dotenv from 'dotenv';
+
+dotenv.config();
 
 const app = express();
 const port = 5000;
 
-app.use(express.json());
+// Middleware
+app.use(
+  helmet({
+    crossOriginResourcePolicy: { policy: 'cross-origin' }, // Izinkan Frontend memuat aset gambar dari backend
+  }),
+);
 
+app.use('/public', express.static('public'));
+
+// CORS configuration
 app.use(
   cors({
-    // Landing Page
     origin: [
       process.env.URL_LANDING_PAGE || 'http://localhost:3000',
       process.env.URL_DASHBOARD_PAGE || 'http://localhost:5173',
@@ -18,6 +29,10 @@ app.use(
     credentials: true,
   }),
 );
+
+// Body Parser JSON & URL-Encoded (Membuat server bisa menerima req json dan url)
+app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
 
 app.listen(port, () => {
   console.log(`Server is running on http://localhost:${port}`);
