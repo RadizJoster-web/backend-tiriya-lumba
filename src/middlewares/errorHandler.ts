@@ -42,13 +42,13 @@ export const errorHandler = (
   // Validasi Zod Error
   if (err.name === 'ZodError') {
     statusCode = 400;
-    errMessage = 'Data input tidak valid';
+    errMessage = err.issues[0].message || 'Data input tidak valid';
     return res.status(statusCode).json({
       success: false,
-      errMessage,
-      error: err.errors,
+      message: errMessage,
     });
   }
+  8;
 
   // Balasan respon JSON yang konsisten ke Klien
   return res.status(statusCode).json({

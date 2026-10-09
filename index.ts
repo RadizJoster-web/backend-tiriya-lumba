@@ -3,15 +3,19 @@ import cors from 'cors';
 import helmet from 'helmet';
 import dotenv from 'dotenv';
 
+// Middleware import
 import { globalRateLimit } from './src/middlewares/rateLimiter';
 import { errorHandler } from './src/middlewares/errorHandler';
+
+// Routes import
+import authRoutes from './src/routes/authRoutes';
 
 dotenv.config();
 
 const app = express();
 const port = 5000;
 
-// Middleware
+// Middleware Config
 app.use(
   helmet({
     crossOriginResourcePolicy: { policy: 'cross-origin' }, // Izinkan Frontend memuat aset gambar dari backend
@@ -38,10 +42,10 @@ app.use(
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-app.get('/', (req, res) => {
-  res.json({ status: 'ok', message: 'Server PT Tirya Lumba berjalan aman!' });
-});
+// Routes
+app.use('/api/auth', authRoutes);
 
+// Error Handdler
 app.use(errorHandler);
 
 app.listen(port, () => {
