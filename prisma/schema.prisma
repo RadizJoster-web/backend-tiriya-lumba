@@ -1,0 +1,147 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+// ==========================================
+// ENUMS
+// ==========================================
+
+enum Role {
+  ADMIN
+  POOL_MANAGER
+  INSTRUCTOR
+  STUDENT
+}
+
+enum PaymentMethod {
+  QRIS
+  BANK_TRANSFER
+  CASH
+}
+
+enum RegistrationStatus {
+  PENDING
+  APPROVED
+  REJECTED
+}
+
+enum RegistrationType {
+  NEW_STUDENT
+  NEW_INSTRUCTOR
+  RENEWAL
+}
+
+// ==========================================
+// MODELS
+// ==========================================
+
+model User {
+  id                String             @id @default(uuid())
+  email             String             @unique
+  password          String
+  role              Role
+  profilePictureUrl String?            // Untuk Admin/Pengelola Kolam
+  locationId        String?            // Terisi jika role POOL_MANAGER (FK ke Location)[cite: 1]
+  location          Location?          @relation(fields: [locationId], references: [id])
+  isActive          Boolean            @default(true)
+  studentProfile    StudentProfile?
+  instructorProfile InstructorProfile?
+}
+
+model Location {
+  id        String    @id @default(uuid())
+  name      String
+  address   String
+  category  String    // Kerjasama Tangerang, Non-Kerjasama, dll.[cite: 2]
+  mapUrl    String?
+  packages  Package[]
+  users     User[]
+  schedules Schedule[]
+}
+
+model Package {
+  id         String   @id @default(uuid())
+  locationId String
+  type       String   // Reguler, Privat, Prestasi, Ekskul[cite: 2]
+  price      Float
+  meetCount  Int      // Jumlah sesi (misal: 4)[cite: 2]
+  location   Location @relation(fields: [locationId], references: [id])
+}
+
+model SessionTime {
+  id          String  @id @default(uuid())
+  dayOfWeek   String  // Senin, Selasa, dll.[cite: 2]
+  sessionName String  // Sesi 1[cite: 2]
+  startTime   String  // "09:00"[cite: 2]
+  endTime     String  // "10:00"[cite: 2]
+  locationId  String? // Jika null, berlaku global. Jika terisi, spesifik kolam.[cite: 2]
+}
+
+model StudentProfile {
+  id             String       @id @default(uuid())
+  userId         String       @unique
+  fullName       String
+  birthPlace     String
+  birthDate      DateTime
+  gender         String
+  address        String
+  phone          String
+  schoolOrOffice String
+  tshirtSize     String       // XS, S, M, L, XL, XXL[cite: 3]
+  activeSessions Int          @default(0)
+  user           User         @relation(fields: [userId], references: [id])
+  attendances    Attendance[]
+}
+
+model InstructorProfile {
+  id         String @id @default(uuid())
+  userId     String @unique
+  fullName   String
+  phone      String
+  specialty  String // Spesialisasi mengajar
+  user       User   @relation(fields: [userId], references: [id])
+}
+
+model Registration {
+  id               String             @id @default(uuid())
+  userId           String             // Referensi pendaftar[cite: 3]
+  type             RegistrationType
+  status           RegistrationStatus @default(PENDING)
+  rejectionReason  String?            // Wajib diisi admin jika status = REJECTED[cite: 3]
+  
+  // Data Pendaftaran Murid (Booking)[cite: 3]
+  packageId        String?
+  locationId       String?
+  instructorId     String?
+  firstMeetDate    DateTime?          // Rencana pertemuan ke-1[cite: 3]
+  firstMeetSession String?
+  
+  // Data Pembayaran & File (Multer)[cite: 3]
+  paymentMethod    PaymentMethod?
+  paymentProofUrl  String?            // Foto transfer / dokumentasi serah uang cash[cite: 3]
+  photoUrl         String?            // Foto 4x6 (Siswa)[cite: 3]
+  cvUrl            String?            // CV (Pelatih)[cite: 4]
+}
+
+model Schedule {
+  id           String  @id @default(uuid())
+  instructorId String
+  studentId    String? // Null jika pelatih hanya declare ketersediaan, terisi jika sudah di-booking murid[cite: 4]
+  dayOfWeek    String
+  sessionName  String
+  locationId   String
+  location     Location @relation(fields: [locationId], references: [id])
+}
+
+model Attendance {
+  id               String         @id @default(uuid())
+  studentProfileId String
+  date             DateTime       @default(now())
+  status           String         // "Hadir" / "Tidak Hadir"
+  studentProfile   StudentProfile @relation(fields: [studentProfileId], references: [id])
+}
