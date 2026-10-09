@@ -1,7 +1,6 @@
 import { Request, Response, NextFunction } from 'express';
 import { z } from 'zod';
-import { PrismaClient } from '@prisma/client';
-const prisma = new PrismaClient();
+import { prisma } from '../../config/prisma';
 
 const verifyOtpSchema = z.object({
   email: z.string().email({ message: 'Format email tidak valid' }),
@@ -20,6 +19,11 @@ export const verifyOtpController = async (
 
     const user = await prisma.user.findUnique({
       where: { email },
+      select: {
+        isVerified: true,
+        otpCode: true,
+        otpExpiresAt: true,
+      },
     });
 
     if (!user) {

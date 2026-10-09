@@ -1,8 +1,7 @@
 import { Request, Response, NextFunction } from 'express';
 import { z } from 'zod';
 import bcrypt from 'bcrypt';
-import { PrismaClient } from '@prisma/client';
-const prisma = new PrismaClient();
+import { prisma } from '../../config/prisma';
 
 import { generateOtp } from '../../utils/generateOtp';
 import { sendOtpEmail } from '../../utils/sendEmail';
