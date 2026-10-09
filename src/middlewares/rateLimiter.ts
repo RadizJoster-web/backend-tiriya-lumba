@@ -7,7 +7,7 @@ export const globalRateLimit = rateLimit({
   standardHeaders: true, // Mengembalikan info rate limit di header 'RateLimit-*'
   legacyHeaders: false, // Mematikan header lama `X-RateLimit-*`
   message: {
-    status: 492,
+    status: 429,
     error: 'Too Many Request',
     message: 'Terlalu banyak request, tunggu beberapa saat lagi',
   },
@@ -18,8 +18,9 @@ export const authRateLimit = rateLimit({
   max: 8,
   standardHeaders: true,
   legacyHeaders: false,
+  skipSuccessfulRequests: true,
   message: {
-    status: 492,
+    status: 429,
     error: 'Too Many Request',
     message: 'Terlalu banyak percobaan login, tunggu beberapa saat lagi',
   },

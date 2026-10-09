@@ -4,6 +4,7 @@ import helmet from 'helmet';
 import dotenv from 'dotenv';
 
 import { globalRateLimit } from './src/middlewares/rateLimiter';
+import { errorHandler } from './src/middlewares/errorHandler';
 
 dotenv.config();
 
@@ -40,6 +41,8 @@ app.use(express.urlencoded({ extended: true }));
 app.get('/', (req, res) => {
   res.json({ status: 'ok', message: 'Server PT Tirya Lumba berjalan aman!' });
 });
+
+app.use(errorHandler);
 
 app.listen(port, () => {
   console.log(`Server is running on http://localhost:${port}`);
