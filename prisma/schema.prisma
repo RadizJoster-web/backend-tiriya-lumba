@@ -45,8 +45,11 @@ model User {
   email             String             @unique
   password          String
   role              Role
-  profilePictureUrl String?            // Untuk Admin/Pengelola Kolam
-  locationId        String?            // Terisi jika role POOL_MANAGER (FK ke Location)[cite: 1]
+  otpCode           String?            // Menyimpan kode OTP
+  otpExpiresAt      DateTime?          // Masa berlaku OTP (misal: 5 menit dari dibuat)
+  isVerified        Boolean            @default(false) // Status apakah OTP sudah diverifikasi
+  profilePictureUrl String?
+  locationId        String?
   location          Location?          @relation(fields: [locationId], references: [id])
   isActive          Boolean            @default(true)
   studentProfile    StudentProfile?
