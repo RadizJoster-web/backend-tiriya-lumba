@@ -64,7 +64,7 @@ export const verifyOtpController = async (
       },
     });
 
-    return res.status(200).json({
+    return res.status(201).json({
       success: true,
       message: 'Verifikasi akun berhasil! Silakan login.',
     });

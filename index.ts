@@ -1,5 +1,6 @@
 import express, { response } from 'express';
 import cors from 'cors';
+import cookieParser from 'cookie-parser';
 import helmet from 'helmet';
 import dotenv from 'dotenv';
 
@@ -41,6 +42,7 @@ app.use(
 // Body Parser JSON & URL-Encoded (Membuat server bisa menerima req json dan url)
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
+app.use(cookieParser());
 
 // Routes
 app.use('/api/auth', authRoutes);

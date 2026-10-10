@@ -11,9 +11,11 @@
     "declarationMap": true,
     "strict": true,
     "skipLibCheck": true,
+    "typeRoots": ["./node_modules/@types", "./src/types"],
     "noUncheckedIndexedAccess": true
   },
   "ts-node": {
+    "files": true,
     "compilerOptions": {
       "module": "CommonJS"
     }

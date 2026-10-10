@@ -48,7 +48,7 @@ export const registerController = async (
 
     await sendOtpEmail(email, otpCode);
 
-    res.status(200).json({
+    res.status(201).json({
       success: true,
       message: 'Registrasi berhasil! Kode OTP telah dikirim ke email Anda.',
       data: email,
