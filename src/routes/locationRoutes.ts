@@ -15,7 +15,7 @@ router.post(
   locationController.createLocation,
 );
 
-router.post(
+router.put(
   '/:id',
   authMiddleware,
   authorize('ADMIN'),

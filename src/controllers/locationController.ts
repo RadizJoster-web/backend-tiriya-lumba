@@ -1,7 +1,6 @@
 import { Request, Response, NextFunction } from 'express';
 import { prisma } from '../config/prisma';
-import { success, z } from 'zod';
-import { captureRejectionSymbol } from 'node:events';
+import { z } from 'zod';
 
 const createLocationSchema = z.object({
   name: z.string().min(1, { message: 'Nama kolam renang tidak boleh kosong' }),
