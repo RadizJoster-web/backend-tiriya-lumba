@@ -1,7 +1,6 @@
 import { z } from 'zod';
 import { Request, Response, NextFunction } from 'express';
 import { prisma } from '../config/prisma';
-const areaPrisma = (prisma as any).area;
 
 const createAreaSchema = z.object({
   name: z
@@ -16,7 +15,7 @@ const updateAreaSchema = createAreaSchema.partial();
 export const areaController = {
   getAreas: async (req: Request, res: Response, next: NextFunction) => {
     try {
-      const areas = await areaPrisma.findMany({
+      const areas = await prisma.area.findMany({
         include: {
           _count: {
             select: { locations: true }, // Menampilkan jumlah kolam di area tersebut
@@ -45,7 +44,7 @@ export const areaController = {
         });
       }
 
-      const area = await areaPrisma.findUnique({
+      const area = await prisma.area.findUnique({
         where: { id },
         include: {
           locations: {
@@ -80,7 +79,7 @@ export const areaController = {
       const { name } = createAreaSchema.parse(req.body);
 
       // Cek apakah nama area sudah ada di database
-      const existingArea = await areaPrisma.findUnique({
+      const existingArea = await prisma.area.findUnique({
         where: { name },
       });
 
@@ -91,7 +90,7 @@ export const areaController = {
         });
       }
 
-      const newArea = await areaPrisma.create({
+      const newArea = await prisma.area.create({
         data: { name },
       });
 
@@ -117,7 +116,7 @@ export const areaController = {
 
       const validatedData = updateAreaSchema.parse(req.body);
 
-      const existingArea = await areaPrisma.findUnique({
+      const existingArea = await prisma.area.findUnique({
         where: { id },
       });
 
@@ -130,7 +129,7 @@ export const areaController = {
 
       // Jika mengubah nama, pastikan tidak bentrok dengan area lain
       if (validatedData.name && validatedData.name !== existingArea.name) {
-        const duplicateArea = await areaPrisma.findUnique({
+        const duplicateArea = await prisma.area.findUnique({
           where: { name: validatedData.name },
         });
 
@@ -142,7 +141,7 @@ export const areaController = {
         }
       }
 
-      const updatedArea = await areaPrisma.update({
+      const updatedArea = await prisma.area.update({
         where: { id },
         data: validatedData,
       });
@@ -168,7 +167,7 @@ export const areaController = {
         });
       }
 
-      const existingArea = await areaPrisma.findUnique({
+      const existingArea = await prisma.area.findUnique({
         where: { id },
         include: {
           _count: {
@@ -193,7 +192,7 @@ export const areaController = {
         });
       }
 
-      await areaPrisma.delete({
+      await prisma.area.delete({
         where: { id },
       });
 

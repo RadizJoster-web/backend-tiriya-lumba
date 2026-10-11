@@ -4,9 +4,7 @@ import { z } from 'zod';
 
 const createLocationSchema = z.object({
   name: z.string({ message: 'Nama kolam renang tidak boleh kosong' }).min(1),
-  address: z.string().min(1, {
-    message: 'Tolong masukan alamat lokasi kolam renang',
-  }),
+  areaId: z.string({ message: 'Area kolam renang tidak boleh kosong' }).min(1),
   category: z.string({ message: 'Kategori tidak boleh kosong' }).min(1),
   mapUrl: z
     .string({
@@ -67,6 +65,32 @@ export const locationController = {
   createLocation: async (req: Request, res: Response, next: NextFunction) => {
     try {
       const validatedData = createLocationSchema.parse(req.body);
+
+      const areaExists = await prisma.area.findUnique({
+        where: { id: validatedData.areaId },
+      });
+
+      if (!areaExists) {
+        return res.status(404).json({
+          success: false,
+          message: 'Area/daerah tidak ditemukan.',
+        });
+      }
+
+      const existingLocationnInArea = await prisma.location.findFirst({
+        where: {
+          areaId: validatedData.areaId,
+          name: validatedData.name,
+        },
+      });
+
+      if (existingLocationnInArea) {
+        return res.status(400).json({
+          success: false,
+          message: `Lokasi kolam "${validatedData.name}" sudah terdaftar di area ini.`,
+        });
+      }
+
       const newLocation = await prisma.location.create({
         data: validatedData,
       });
