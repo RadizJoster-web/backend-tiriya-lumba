@@ -3,18 +3,16 @@ import cors from 'cors';
 import cookieParser from 'cookie-parser';
 import helmet from 'helmet';
 import dotenv from 'dotenv';
+import rootRouter from './src/routes/routes';
 
 // Middleware import
 import { globalRateLimit } from './src/middlewares/rateLimiter';
 import { errorHandler } from './src/middlewares/errorHandler';
 
-// Routes import
-import authRoutes from './src/routes/authRoutes';
-
 dotenv.config();
 
 const app = express();
-const port = 3000;
+const port = 5000;
 
 // Middleware Config
 app.use(
@@ -45,7 +43,7 @@ app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());
 
 // Routes
-app.use('/api/auth', authRoutes);
+app.use('/api', rootRouter);
 
 // Error Handdler
 app.use(errorHandler);

@@ -1,0 +1,3 @@
+Pertanyaan yang tiba-tiba muncul ketika sedang ngoding
+
+1. Apakah setiap guru mempunyai maximal murid yang bisa diajar, atau mereka bebeas ingin mengajar berapapun murid di 1 sesi.
