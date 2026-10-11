@@ -3,14 +3,16 @@ import { prisma } from '../config/prisma';
 import { z } from 'zod';
 
 const createLocationSchema = z.object({
-  name: z.string().min(1, { message: 'Nama kolam renang tidak boleh kosong' }),
+  name: z.string({ message: 'Nama kolam renang tidak boleh kosong' }).min(1),
   address: z.string().min(1, {
     message: 'Tolong masukan alamat lokasi kolam renang',
   }),
-  category: z.string().min(1, { message: 'Kategori tidak boleh kosong' }),
-  mapUrl: z.string().min(1, {
-    message: 'Tolong masukan lokasai koordinat sesuai titik di google map',
-  }),
+  category: z.string({ message: 'Kategori tidak boleh kosong' }).min(1),
+  mapUrl: z
+    .string({
+      message: 'Tolong masukan lokasai koordinat sesuai titik di google map',
+    })
+    .min(1),
 });
 
 const updateLocationSchema = createLocationSchema.partial();

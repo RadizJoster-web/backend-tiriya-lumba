@@ -56,12 +56,19 @@ model User {
   instructorProfile InstructorProfile?
 }
 
+model Area {
+  id        String     @id @default(uuid())
+  name      String     @unique // Contoh: "Tangerang Selatan", "Jakarta Selatan", "Bintaro"
+  locations Location[] // Relasi: 1 Area menampung banyak Kolam (Location)
+}
+
 model Location {
   id        String    @id @default(uuid())
-  name      String
-  address   String
-  category  String    // Kerjasama Tangerang, Non-Kerjasama, dll.[cite: 2]
+  name      String    // Contoh: "Kolam Renang Graha Raya"
+  category  String    // Kerjasama Tangerang, Non-Kerjasama, dll.
   mapUrl    String?
+  areaId    String?   // Menyimpan UUID dari tabel Area
+  area      Area?     @relation(fields: [areaId], references: [id])
   packages  Package[]
   users     User[]
   schedules Schedule[]

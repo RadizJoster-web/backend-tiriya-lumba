@@ -1,6 +1,6 @@
 import { Request, Response, NextFunction } from 'express';
 import { prisma } from '../config/prisma';
-import {  z } from 'zod';
+import { z } from 'zod';
 
 const createPackageSchema = z.object({
   locationId: z.string().min(1, { message: 'Kolam tidak boleh kosong' }),
@@ -14,6 +14,8 @@ const updatePackageSchema = createPackageSchema.partial();
 export const packageController = {
   getPackages: async (req: Request, res: Response, next: NextFunction) => {
     try {
+      const { category } = req.query;
+
       const packages = await prisma.package.findMany();
 
       return res.status(200).json({
