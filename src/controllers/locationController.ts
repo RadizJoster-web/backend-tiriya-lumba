@@ -122,6 +122,18 @@ export const locationController = {
 
       const validatedData = updateLocationSchema.parse(req.body);
 
+      if (validatedData.areaId) {
+        const areaExists = await prisma.area.findUnique({
+          where: { id: validatedData.areaId },
+        });
+        if (!areaExists) {
+          return res.status(404).json({
+            success: false,
+            message: 'Area/daerah tujuan tidak ditemukan.',
+          });
+        }
+      }
+
       const updatedLocation = await prisma.location.update({
         where: { id },
         data: validatedData,

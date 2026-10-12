@@ -32,6 +32,9 @@ export const errorHandler = (
         errMessage =
           'Gagal menyimpan data karena relasi data terkait tidak valid';
         break;
+      case 'P2002':
+        statusCode = 409;
+        errMessage = 'Data lokasi dengan nama dan area tersebut sudah ada';
       default:
         statusCode = 400;
         errMessage = `Database Error: Kode ${err.code}`;
