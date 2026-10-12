@@ -9,6 +9,10 @@ const createAreaSchema = z.object({
     .max(50, { message: 'Nama area maksimal 50 karakter' }),
 });
 
+const areaIdParamSchema = z.object({
+  id: z.string().uuid({ message: 'Format ID lokasi tidak valid' }),
+});
+
 const updateAreaSchema = createAreaSchema.partial();
 // The generated Prisma client may not yet include the Area model.
 
@@ -35,7 +39,7 @@ export const areaController = {
 
   getAreaById: async (req: Request, res: Response, next: NextFunction) => {
     try {
-      const { id } = req.params;
+      const { id } = areaIdParamSchema.parse(req.params);
 
       if (typeof id !== 'string' || !id) {
         return res.status(400).json({
@@ -106,7 +110,7 @@ export const areaController = {
 
   updateArea: async (req: Request, res: Response, next: NextFunction) => {
     try {
-      const { id } = req.params;
+      const { id } = areaIdParamSchema.parse(req.params);
       if (typeof id !== 'string' || !id) {
         return res.status(400).json({
           success: false,
@@ -158,7 +162,7 @@ export const areaController = {
 
   deleteArea: async (req: Request, res: Response, next: NextFunction) => {
     try {
-      const { id } = req.params;
+      const { id } = areaIdParamSchema.parse(req.params);
 
       if (typeof id !== 'string' || !id) {
         return res.status(400).json({

@@ -9,6 +9,10 @@ const createPackageSchema = z.object({
   meetCount: z.int32().min(1, { message: 'Sesi pertemuan tidak boleh kosong' }),
 });
 
+const packageIdParamSchema = z.object({
+  id: z.string().uuid({ message: 'Format ID lokasi tidak valid' }),
+});
+
 const updatePackageSchema = createPackageSchema.partial();
 
 export const packageController = {
@@ -29,7 +33,7 @@ export const packageController = {
 
   getPackageById: async (req: Request, res: Response, next: NextFunction) => {
     try {
-      const { id } = req.params;
+      const { id } = packageIdParamSchema.parse(req.params);
 
       if (typeof id !== 'string' || !id) {
         return res.status(400).json({
@@ -77,7 +81,7 @@ export const packageController = {
 
   updatePackage: async (req: Request, res: Response, next: NextFunction) => {
     try {
-      const { id } = req.params;
+      const { id } = packageIdParamSchema.parse(req.params);
 
       if (typeof id !== 'string' || !id) {
         return res.status(400).json({
@@ -104,7 +108,7 @@ export const packageController = {
 
   deletePackage: async (req: Request, res: Response, next: NextFunction) => {
     try {
-      const { id } = req.params;
+      const { id } = packageIdParamSchema.parse(req.params);
 
       if (typeof id !== 'string' || !id) {
         return res.status(400).json({

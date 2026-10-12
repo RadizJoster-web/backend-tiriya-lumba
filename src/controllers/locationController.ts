@@ -13,6 +13,10 @@ const createLocationSchema = z.object({
     .min(1),
 });
 
+const locationIdParamSchema = z.object({
+  id: z.string().uuid({ message: 'Format ID lokasi tidak valid' }),
+});
+
 const updateLocationSchema = createLocationSchema.partial();
 
 export const locationController = {
@@ -33,7 +37,7 @@ export const locationController = {
 
   getLocationById: async (req: Request, res: Response, next: NextFunction) => {
     try {
-      const { id } = req.params;
+      const { id } = locationIdParamSchema.parse(req.params);
 
       if (typeof id !== 'string' || !id) {
         return res.status(400).json({
@@ -107,7 +111,7 @@ export const locationController = {
 
   updateLocation: async (req: Request, res: Response, next: NextFunction) => {
     try {
-      const { id } = req.params;
+      const { id } = locationIdParamSchema.parse(req.params);
 
       if (typeof id !== 'string' || !id) {
         return res.status(400).json({
@@ -135,7 +139,7 @@ export const locationController = {
 
   deleteLocation: async (req: Request, res: Response, next: NextFunction) => {
     try {
-      const { id } = req.params;
+      const { id } = locationIdParamSchema.parse(req.params);
 
       if (typeof id !== 'string' || !id) {
         return res.status(400).json({
