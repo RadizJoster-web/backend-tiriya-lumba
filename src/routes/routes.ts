@@ -7,6 +7,7 @@ import areaRoutes from './areaRoutes';
 import locationRoutes from './locationRoutes';
 import packageRoutes from './packageRoutes';
 import sessionRoutes from './sessionRoutes';
+import poolManagerRoutes from './poolManagerRoutes';
 
 // Routes
 rootRouter.use('/auth', authRoutes);
@@ -14,5 +15,6 @@ rootRouter.use('/areas', areaRoutes);
 rootRouter.use('/locations', locationRoutes);
 rootRouter.use('/packages', packageRoutes);
 rootRouter.use('/sessions', sessionRoutes);
+rootRouter.use('/pool-managers', poolManagerRoutes);
 
 export default rootRouter;
