@@ -17,19 +17,19 @@ router.get('/:id', getSessionById);
 router.post(
   '/',
   authMiddleware,
-  authorize('ADMIN', 'POOL_MANAGER'),
+  authorize('ADMIN'),
   createSession,
 );
 router.put(
   '/:id',
   authMiddleware,
-  authorize('ADMIN', 'POOL_MANAGER'),
+  authorize('ADMIN'),
   updateSession,
 );
 router.delete(
   '/:id',
   authMiddleware,
-  authorize('ADMIN', 'POOL_MANAGER'),
+  authorize('ADMIN'),
   deleteSession,
 );
 

@@ -23,6 +23,16 @@ export const createSessionSchema = z.object({
     .nullable()
     .optional(),
 });
+
+export const getSessionFilterSchema = z.object({
+  locationId: z
+    .string({ message: 'Location ID wajib diisi' })
+    .uuid({ message: 'Format Location ID harus berupa UUID' }),
+  dayOfWeek: z
+    .string({ message: 'Hari wajib diisi' })
+    .min(1, { message: 'Hari tidak boleh kosong' }),
+});
+
 export const updateSessionSchema = createSessionSchema.partial();
 export const paramIdSchema = z.object({
   id: z.string().uuid({ message: 'Format ID sesi tidak valid' }),
