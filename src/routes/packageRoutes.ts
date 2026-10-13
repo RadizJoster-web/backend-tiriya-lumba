@@ -1,32 +1,20 @@
 import { Router } from 'express';
 const router = Router();
 import { authMiddleware, authorize } from '../middlewares/authMiddleware';
-import { packageController } from '../controllers/packageController';
+
+import { getPackages } from '../controllers/packageController/get';
+import { getPackageById } from '../controllers/packageController/getById';
+import { createPackage } from '../controllers/packageController/update';
+import { updatePackage } from '../controllers/packageController/create';
+import { deletePackage } from '../controllers/packageController/delete';
 
 // Public Route
-router.get('/', packageController.getPackages);
-router.get('/:id', packageController.getPackageById);
+router.get('/', getPackages);
+router.get('/:id', getPackageById);
 
 // Private Routes
-router.post(
-  '/',
-  authMiddleware,
-  authorize('ADMIN'),
-  packageController.createPackage,
-);
-
-router.put(
-  '/:id',
-  authMiddleware,
-  authorize('ADMIN'),
-  packageController.updatePackage,
-);
-
-router.delete(
-  '/:id',
-  authMiddleware,
-  authorize('ADMIN'),
-  packageController.deletePackage,
-);
+router.post('/', authMiddleware, authorize('ADMIN'), createPackage);
+router.put('/:id', authMiddleware, authorize('ADMIN'), updatePackage);
+router.delete('/:id', authMiddleware, authorize('ADMIN'), deletePackage);
 
 export default router;
