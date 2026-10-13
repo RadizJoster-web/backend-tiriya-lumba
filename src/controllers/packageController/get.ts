@@ -7,7 +7,6 @@ export const getPackages = async (
   next: NextFunction,
 ) => {
   try {
-    const { category } = req.query;
     const packages = await prisma.package.findMany();
 
     return res.status(200).json({
