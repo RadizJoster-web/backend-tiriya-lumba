@@ -89,7 +89,6 @@ model Package {
   locationId String
   type       String // Reguler, Privat, Prestasi, Ekskul[cite: 2]
   price      Float
-  meetCount  Int // Jumlah sesi (misal: 4)[cite: 2]
   location   Location @relation(fields: [locationId], references: [id])
 }
 

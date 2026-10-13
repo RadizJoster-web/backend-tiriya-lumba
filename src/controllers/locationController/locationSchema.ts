@@ -16,3 +16,17 @@ export const locationIdParamSchema = z.object({
 });
 
 export const updateLocationSchema = createLocationSchema.partial();
+
+export const getPublicLocationsQuerySchema = z.object({
+  page: z.coerce
+    .number({ message: 'Page harus berupa angka' })
+    .min(1, { message: 'Page minimal 1' })
+    .optional()
+    .default(1),
+  limit: z.coerce
+    .number({ message: 'Limit harus berupa angka' })
+    .min(1, { message: 'Limit minimal 1' })
+    .max(50, { message: 'Limit maksimal 50' })
+    .optional()
+    .default(8), // 👈 Default 8 data per page sesuai kebutuhan Landing Page
+});
