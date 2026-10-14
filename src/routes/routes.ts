@@ -9,7 +9,8 @@ import packageRoutes from './packageRoutes';
 import sessionRoutes from './sessionRoutes';
 import poolManagerRoutes from './poolManagerRoutes';
 import instructorRoutes from './instructorRoutes';
-import uploadRoutes from "./uploadRoutes"
+import uploadRoutes from './uploadRoutes';
+import registerRoutes from './registerRoutes';
 
 // Routes
 rootRouter.use('/auth', authRoutes);
@@ -20,5 +21,6 @@ rootRouter.use('/sessions', sessionRoutes);
 rootRouter.use('/pool-managers', poolManagerRoutes);
 rootRouter.use('/instructor', instructorRoutes);
 rootRouter.use('/upload-file', uploadRoutes);
+rootRouter.use('/register', registerRoutes);
 
 export default rootRouter;
