@@ -38,7 +38,8 @@ export const registerController = async (
       },
       create: {
         email,
-        password,
+        password: hashedPassword,
+        fullName: '',
         role: 'STUDENT',
         otpCode,
         otpExpiresAt,

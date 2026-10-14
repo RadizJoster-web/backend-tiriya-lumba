@@ -43,7 +43,7 @@ enum RegistrationType {
 model User {
   id                String             @id @default(uuid())
   fullName          String // Tambahan Nama Lengkap
-  phone             String // Tambahan No. Telepon
+  phone             String? // Tambahan No. Telepon
   email             String             @unique
   password          String
   role              Role

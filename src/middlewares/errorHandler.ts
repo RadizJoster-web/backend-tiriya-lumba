@@ -1,5 +1,6 @@
 import { Request, Response, NextFunction } from 'express';
 import { Prisma } from '@prisma/client';
+import multer from 'multer';
 
 export const errorHandler = (
   err: any,
@@ -60,4 +61,30 @@ export const errorHandler = (
     // Sembunyikan stack trace jika aplikasi berada di lingkungan produksi
     ...(process.env.NODE_ENV === 'development' && { stack: err.stack }),
   });
+};
+
+export const errorMulterHandler = (
+  err: any,
+  req: Request,
+  res: Response,
+  next: NextFunction,
+) => {
+  if (err instanceof multer.MulterError) {
+    if (err.code === 'LIMIT_FILE_SIZE') {
+      return res.status(400).json({
+        success: false,
+        message: 'Ukuran file terlalu besar. Maksimal 5 MB.',
+      });
+    }
+    return res.status(400).json({
+      success: false,
+      message: `Upload error: ${err.message}`,
+    });
+  } else if (err) {
+    return res.status(400).json({
+      success: false,
+      message: err.message,
+    });
+  }
+  next();
 };

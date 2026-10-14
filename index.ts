@@ -8,6 +8,7 @@ import rootRouter from './src/routes/routes';
 // Middleware import
 import { globalRateLimit } from './src/middlewares/rateLimiter';
 import { errorHandler } from './src/middlewares/errorHandler';
+import path from 'path';
 
 dotenv.config();
 
@@ -23,6 +24,7 @@ app.use(
 app.use(globalRateLimit);
 
 app.use('/public', express.static('public'));
+app.use('/uploads', express.static(path.join(__dirname, '../uploads')));
 
 // CORS configuration
 app.use(
