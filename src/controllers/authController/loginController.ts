@@ -61,6 +61,7 @@ export const loginController = async (
 
     const tokenPayload = {
       userId: user.id,
+      email: user.email,
       role: user.role,
       ...(user.role === 'POOL_MANAGER' ? { locationId: user.locationId } : {}),
     };

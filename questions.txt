@@ -1,3 +1,6 @@
 Pertanyaan yang tiba-tiba muncul ketika sedang ngoding
 
 1. Apakah setiap guru mempunyai maximal murid yang bisa diajar, atau mereka bebeas ingin mengajar berapapun murid di 1 sesi.
+Jawaban: Maximal 5 murid reguler & 1 murid Privat
+2. Gimana cara mengatasi upload gambar yangg storage nya besar (3 - 5 MB)
+jawaban: sebelum memasukan ke dalam formData (react/next) kompres dulu file tersebut hingga menjadi 200KB dan 5–10 detik memotong waktu menjadi hanya < 1 detik. Library [browser-image-compression]

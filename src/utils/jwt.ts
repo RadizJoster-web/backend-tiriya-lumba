@@ -3,7 +3,7 @@ import type { SignOptions } from 'jsonwebtoken';
 
 interface TokenPayload {
   userId: string;
-  email?: string | null;
+  email: string;
   role: string;
   location?: string | null;
 }
