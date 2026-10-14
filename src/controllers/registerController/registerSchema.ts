@@ -4,7 +4,7 @@ import { z } from 'zod';
 export const registerStudentSchema = z.object({
   // Data Diri Siswa (Step 1)
   profilePictureUrl: z.string().optional().nullable(), // Berisi string filename dari API upload terpisah
-  fullName: z.string({ message: 'Nama lengkap wajib diisi' }),
+  fullName: z.string({ message: 'Nama murid wajib diisi' }),
   birthPlace: z.string({ message: 'Tempat lahir wajib diisi' }),
   birthDate: z.string({ message: 'Tanggal lahir wajib diisi' }), // format: YYYY-MM-DD
   gender: z.string({ message: 'Jenis kelamin wajib diisi' }),

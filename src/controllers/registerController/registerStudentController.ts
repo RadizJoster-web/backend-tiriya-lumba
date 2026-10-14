@@ -11,11 +11,11 @@ export const registerStudentController = async (
   try {
     // 1. Validasi JSON dari frontend
     const data = registerStudentSchema.parse(req.body);
-    const userId = (req as any).user.id;
+    const userEmail = (req as any).user.email;
 
     // 2. Cek duplikasi email (Jika sudah terdaftar sebagai murid aktif, tolak)
     const existingUser = await prisma.user.findUnique({
-      where: { email: data.email },
+      where: { email: userEmail },
       include: { studentProfile: true },
     });
 
@@ -60,6 +60,7 @@ export const registerStudentController = async (
       const studentProfile = await tx.studentProfile.create({
         data: {
           userId: user.id,
+          fullName: data.fullName,
           birthPlace: data.birthPlace,
           birthDate: new Date(data.birthDate),
           gender: data.gender,

@@ -104,6 +104,7 @@ model SessionTime {
 model StudentProfile {
   id             String       @id @default(uuid())
   userId         String       @unique
+  fullName       String       // Nama lengkap murid / anak yang ikut les 
   birthPlace     String
   birthDate      DateTime
   gender         String
