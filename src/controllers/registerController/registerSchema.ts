@@ -33,3 +33,44 @@ export const registerStudentSchema = z.object({
   }),
   paymentProofUrl: z.string({ message: 'Bukti pembayaran wajib diisi' }), // Berisi string filename
 });
+
+export const registerInstructorSchema = z.object({
+  // Data Identitas Pelatih
+  fullName: z
+    .string({ message: 'Nama lengkap wajib diisi' })
+    .min(2, { message: 'Nama lengkap minimal 2 karakter' }),
+  phone: z
+    .string({ message: 'No. telepon wajib diisi' })
+    .min(10, { message: 'No. telepon minimal 10 digit' }),
+  birthDate: z.string({ message: 'Tanggal lahir wajib diisi' }), // Format YYYY-MM-DD
+  gender: z.enum(['Laki-Laki', 'Perempuan'], {
+    message: 'Jenis kelamin wajib diisi',
+  }),
+  address: z.string({ message: 'Alamat lengkap wajib diisi' }),
+
+  // Profil Profesional Pelatih
+  shortBio: z
+    .string({ message: 'Profil singkat wajib diisi' })
+    .min(10, { message: 'Profil singkat minimal 10 karakter' }),
+  license: z
+    .string({ message: 'Lisensi wajib diisi' })
+    .min(2, { message: 'Lisensi minimal 2 karakter' }),
+  experience: z.string({ message: 'Pengalaman mengajar wajib diisi' }),
+
+  // Fleksibilitas Jadwal Melatih (Lokasi + Hari + Sesi)
+  schedules: z
+    .array(
+      z.object({
+        locationId: z.string().uuid({ message: 'Location ID tidak valid' }),
+        dayOfWeek: z.string({ message: 'Hari wajib diisi' }),
+        sessionName: z.string({ message: 'Nama sesi wajib diisi' }),
+      }),
+    )
+    .min(1, { message: 'Pilih minimal 1 jadwal mengajar' }),
+
+  // File Uploads (String Filename/URL dari Pre-Upload API)
+  profilePictureUrl: z.string().optional().nullable(),
+  cvUrl: z.string({ message: 'File CV wajib diunggah' }),
+});
+
+export type RegisterInstructorInput = z.infer<typeof registerInstructorSchema>;
