@@ -7,6 +7,10 @@ import { generateOtp } from '../../utils/generateOtp';
 import { sendOtpEmail } from '../../utils/sendEmail';
 
 const registerSchema = z.object({
+  fullName: z
+    .string({ message: 'Nama lengkap wajib diisi' })
+    .min(3, { message: 'Minimal 3 karakter' })
+    .max(40, { message: 'Maksimal nama 40 karakter' }),
   email: z.string().email({ message: 'Format email tidak valid' }),
   password: z
     .string()
@@ -19,7 +23,7 @@ export const registerController = async (
   res: Response,
   next: NextFunction,
 ) => {
-  const { email, password } = req.body;
+  const { fullName, email, password } = req.body;
   try {
     // Memvalidasi req.body secara langsung
     const validatedData = registerSchema.parse({ email, password });
