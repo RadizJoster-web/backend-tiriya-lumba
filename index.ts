@@ -21,7 +21,7 @@ app.use(
     crossOriginResourcePolicy: { policy: 'cross-origin' }, // Izinkan Frontend memuat aset gambar dari backend
   }),
 );
-app.use(globalRateLimit);
+// app.use(globalRateLimit);
 
 app.use('/public', express.static('public'));
 app.use('/uploads', express.static(path.join(__dirname, '../uploads')));

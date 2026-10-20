@@ -1,25 +1,27 @@
 # Dokumentasi REST API - PT Tirya Lumba
 
-Dokumentasi resmi arsitektur REST API, kontrak *request/response*, skema autentikasi, dan otorisasi *Role-Based Access Control* (RBAC) untuk backend PT Tirya Lumba.
+Dokumentasi resmi arsitektur REST API, kontrak _request/response_, skema autentikasi, dan otorisasi _Role-Based Access Control_ (RBAC) untuk backend PT Tirya Lumba.
 
 ---
 
 ## 1. Ringkasan & Konfigurasi Server
 
-* **Base URL:** `http://localhost:5000/api`
-* **Format Payload:** `application/json` (Kecuali endpoint upload file menggunakan `multipart/form-data`)
-* **Keamanan:**
-  * **Helmet:** Proteksi security headers dan *Cross-Origin Resource Policy* diaktifkan untuk aset gambar publik.
-  * **CORS:** Dibatasi untuk klien Landing Page (`http://localhost:3000`) dan Dasbor Admin (`http://localhost:5173`).
-  * **Rate Limiter:** Global Rate Limiting aktif pada seluruh endpoint API (100 request per 15 menit per IP).
-  * **Static Directories:**
-    * `/public` -> Melayani aset statis publik (`http://localhost:5000/public/...`).
-    * `/uploads` -> Melayani file hasil unggahan Multer (`http://localhost:5000/uploads/...`).
+- **Base URL:** `http://localhost:5000/api`
+- **Format Payload:** `application/json` (Kecuali endpoint upload file menggunakan `multipart/form-data`)
+- **Keamanan:**
+  - **Helmet:** Proteksi security headers dan _Cross-Origin Resource Policy_ diaktifkan untuk aset gambar publik.
+  - **CORS:** Dibatasi untuk klien Landing Page (`http://localhost:3000`) dan Dasbor Admin (`http://localhost:5173`).
+  - **Rate Limiter:** Global Rate Limiting aktif pada seluruh endpoint API (100 request per 15 menit per IP).
+  - **Static Directories:**
+    - `/public` -> Melayani aset statis publik (`http://localhost:5000/public/...`).
+    - `/uploads` -> Melayani file hasil unggahan Multer (`http://localhost:5000/uploads/...`).
 
 ### Mekanisme Autentikasi & Sesi
+
 Sistem menggunakan **JSON Web Token (JWT)**.
-* **Penyimpanan Token:** Token dikirimkan kembali melalui body response saat login serta otomatis disematkan ke dalam **HTTP-Only Cookie** bernama `access_token`.
-* **Header Permintaan:** Untuk klien yang tidak menggunakan cookie berbasis browser, sertakan header:
+
+- **Penyimpanan Token:** Token dikirimkan kembali melalui body response saat login serta otomatis disematkan ke dalam **HTTP-Only Cookie** bernama `access_token`.
+- **Header Permintaan:** Untuk klien yang tidak menggunakan cookie berbasis browser, sertakan header:
   ```http
   Authorization: Bearer <access_token>
   ```
@@ -27,13 +29,14 @@ Sistem menggunakan **JSON Web Token (JWT)**.
   ```http
   Cookie: access_token=<access_token>
   ```
-* **Masa Berlaku Token:**
-  * Role `ADMIN` dan `POOL_MANAGER`: **2 Jam**
-  * Role `STUDENT` dan `INSTRUCTOR`: **30 Hari**
+- **Masa Berlaku Token:**
+  - Role `ADMIN` dan `POOL_MANAGER`: **2 Jam**
+  - Role `STUDENT` dan `INSTRUCTOR`: **30 Hari**
 
 ### Format Standar Respon API
 
 **Struktur Respon Sukses:**
+
 ```json
 {
   "success": true,
@@ -49,6 +52,7 @@ Sistem menggunakan **JSON Web Token (JWT)**.
 ```
 
 **Struktur Respon Gagal:**
+
 ```json
 {
   "success": false,
@@ -63,13 +67,16 @@ Sistem menggunakan **JSON Web Token (JWT)**.
 Modul otentikasi menangani alur pendaftaran user baru, verifikasi kode OTP berbasis email, dan login akun.
 
 ### 2.1 Registrasi Akun Awal (Kirim OTP)
-* **Endpoint:** `POST /api/auth/register`
-* **Authentikasi:** Tidak Butuh
-* **Otorisasi Role:** `PUBLIC`
+
+- **Endpoint:** `POST /api/auth/register`
+- **Authentikasi:** Tidak Butuh
+- **Otorisasi Role:** `PUBLIC`
 
 **Contoh Request:**
+
 - **Headers:** `Content-Type: application/json`
 - **Request Body JSON:**
+
 ```json
 {
   "fullName": "Budi Santoso",
@@ -79,6 +86,7 @@ Modul otentikasi menangani alur pendaftaran user baru, verifikasi kode OTP berba
 ```
 
 **Contoh Response Sukses (201 Created):**
+
 ```json
 {
   "success": true,
@@ -88,6 +96,7 @@ Modul otentikasi menangani alur pendaftaran user baru, verifikasi kode OTP berba
 ```
 
 **Contoh Response Gagal (400 Bad Request):**
+
 ```json
 {
   "success": false,
@@ -98,13 +107,16 @@ Modul otentikasi menangani alur pendaftaran user baru, verifikasi kode OTP berba
 ---
 
 ### 2.2 Verifikasi Kode OTP
-* **Endpoint:** `POST /api/auth/verify-otp`
-* **Authentikasi:** Tidak Butuh
-* **Otorisasi Role:** `PUBLIC`
+
+- **Endpoint:** `POST /api/auth/verify-otp`
+- **Authentikasi:** Tidak Butuh
+- **Otorisasi Role:** `PUBLIC`
 
 **Contoh Request:**
+
 - **Headers:** `Content-Type: application/json`
 - **Request Body JSON:**
+
 ```json
 {
   "email": "budi.santoso@example.com",
@@ -113,6 +125,7 @@ Modul otentikasi menangani alur pendaftaran user baru, verifikasi kode OTP berba
 ```
 
 **Contoh Response Sukses (201 Created):**
+
 ```json
 {
   "success": true,
@@ -121,6 +134,7 @@ Modul otentikasi menangani alur pendaftaran user baru, verifikasi kode OTP berba
 ```
 
 **Contoh Response Gagal (400 Bad Request):**
+
 ```json
 {
   "success": false,
@@ -129,6 +143,7 @@ Modul otentikasi menangani alur pendaftaran user baru, verifikasi kode OTP berba
 ```
 
 **Contoh Response Gagal (404 Not Found):**
+
 ```json
 {
   "success": false,
@@ -139,13 +154,16 @@ Modul otentikasi menangani alur pendaftaran user baru, verifikasi kode OTP berba
 ---
 
 ### 2.3 Login Akun & Penerbitan JWT
-* **Endpoint:** `POST /api/auth/login`
-* **Authentikasi:** Tidak Butuh
-* **Otorisasi Role:** `PUBLIC`
+
+- **Endpoint:** `POST /api/auth/login`
+- **Authentikasi:** Tidak Butuh
+- **Otorisasi Role:** `PUBLIC`
 
 **Contoh Request:**
+
 - **Headers:** `Content-Type: application/json`
 - **Request Body JSON:**
+
 ```json
 {
   "email": "budi.santoso@example.com",
@@ -154,7 +172,8 @@ Modul otentikasi menangani alur pendaftaran user baru, verifikasi kode OTP berba
 ```
 
 **Contoh Response Sukses (200 OK):**
-*(Server juga menyetel header `Set-Cookie: access_token=...; HttpOnly; SameSite=Lax`)*
+_(Server juga menyetel header `Set-Cookie: access_token=...; HttpOnly; SameSite=Lax`)_
+
 ```json
 {
   "success": true,
@@ -171,6 +190,7 @@ Modul otentikasi menangani alur pendaftaran user baru, verifikasi kode OTP berba
 ```
 
 **Contoh Response Gagal (401 Unauthorized):**
+
 ```json
 {
   "success": false,
@@ -179,6 +199,7 @@ Modul otentikasi menangani alur pendaftaran user baru, verifikasi kode OTP berba
 ```
 
 **Contoh Response Gagal (403 Forbidden - Belum Terverifikasi):**
+
 ```json
 {
   "success": false,
@@ -193,14 +214,17 @@ Modul otentikasi menangani alur pendaftaran user baru, verifikasi kode OTP berba
 Modul ini mengelola data wilayah/daerah (misal: "Tangerang Selatan", "Jakarta Selatan") yang mengelompokkan lokasi-lokasi kolam renang.
 
 ### 3.1 Menampilkan Seluruh Area
-* **Endpoint:** `GET /api/areas`
-* **Authentikasi:** Tidak Butuh
-* **Otorisasi Role:** `PUBLIC`
+
+- **Endpoint:** `GET /api/areas`
+- **Authentikasi:** Tidak Butuh
+- **Otorisasi Role:** `PUBLIC`
 
 **Contoh Request:**
+
 - **Headers:** Tidak membutuhkan header autentikasi
 
 **Contoh Response Sukses (200 OK):**
+
 ```json
 {
   "success": true,
@@ -226,14 +250,17 @@ Modul ini mengelola data wilayah/daerah (misal: "Tangerang Selatan", "Jakarta Se
 ---
 
 ### 3.2 Menampilkan Detail Area Berdasarkan ID
-* **Endpoint:** `GET /api/areas/:id`
-* **Authentikasi:** Tidak Butuh
-* **Otorisasi Role:** `PUBLIC`
+
+- **Endpoint:** `GET /api/areas/:id`
+- **Authentikasi:** Tidak Butuh
+- **Otorisasi Role:** `PUBLIC`
 
 **Contoh Request:**
+
 - **URL Path Params:** `id` (string, UUID, contoh: `e4f8a1b2-3c4d-5e6f-7a8b-9c0d1e2f3a4b`)
 
 **Contoh Response Sukses (200 OK):**
+
 ```json
 {
   "success": true,
@@ -253,6 +280,7 @@ Modul ini mengelola data wilayah/daerah (misal: "Tangerang Selatan", "Jakarta Se
 ```
 
 **Contoh Response Gagal (404 Not Found):**
+
 ```json
 {
   "success": false,
@@ -263,15 +291,18 @@ Modul ini mengelola data wilayah/daerah (misal: "Tangerang Selatan", "Jakarta Se
 ---
 
 ### 3.3 Tambah Area Baru
-* **Endpoint:** `POST /api/areas`
-* **Authentikasi:** Membutuhkan Token
-* **Otorisasi Role:** `ADMIN`
+
+- **Endpoint:** `POST /api/areas`
+- **Authentikasi:** Membutuhkan Token
+- **Otorisasi Role:** `ADMIN`
 
 **Contoh Request:**
+
 - **Headers:**
   - `Authorization: Bearer <access_token>`
   - `Content-Type: application/json`
 - **Request Body JSON:**
+
 ```json
 {
   "name": "Jakarta Barat"
@@ -279,6 +310,7 @@ Modul ini mengelola data wilayah/daerah (misal: "Tangerang Selatan", "Jakarta Se
 ```
 
 **Contoh Response Sukses (201 Created):**
+
 ```json
 {
   "success": true,
@@ -291,6 +323,7 @@ Modul ini mengelola data wilayah/daerah (misal: "Tangerang Selatan", "Jakarta Se
 ```
 
 **Contoh Response Gagal (400 Bad Request):**
+
 ```json
 {
   "success": false,
@@ -299,6 +332,7 @@ Modul ini mengelola data wilayah/daerah (misal: "Tangerang Selatan", "Jakarta Se
 ```
 
 **Contoh Response Gagal (403 Forbidden):**
+
 ```json
 {
   "success": false,
@@ -309,16 +343,19 @@ Modul ini mengelola data wilayah/daerah (misal: "Tangerang Selatan", "Jakarta Se
 ---
 
 ### 3.4 Perbarui Data Area
-* **Endpoint:** `PUT /api/areas/:id`
-* **Authentikasi:** Membutuhkan Token
-* **Otorisasi Role:** `ADMIN`
+
+- **Endpoint:** `PUT /api/areas/:id`
+- **Authentikasi:** Membutuhkan Token
+- **Otorisasi Role:** `ADMIN`
 
 **Contoh Request:**
+
 - **Headers:**
   - `Authorization: Bearer <access_token>`
   - `Content-Type: application/json`
 - **URL Path Params:** `id` (string, UUID)
 - **Request Body JSON:**
+
 ```json
 {
   "name": "Jakarta Barat Kota"
@@ -326,6 +363,7 @@ Modul ini mengelola data wilayah/daerah (misal: "Tangerang Selatan", "Jakarta Se
 ```
 
 **Contoh Response Sukses (200 OK):**
+
 ```json
 {
   "success": true,
@@ -338,6 +376,7 @@ Modul ini mengelola data wilayah/daerah (misal: "Tangerang Selatan", "Jakarta Se
 ```
 
 **Contoh Response Gagal (404 Not Found):**
+
 ```json
 {
   "success": false,
@@ -348,15 +387,18 @@ Modul ini mengelola data wilayah/daerah (misal: "Tangerang Selatan", "Jakarta Se
 ---
 
 ### 3.5 Hapus Data Area
-* **Endpoint:** `DELETE /api/areas/:id`
-* **Authentikasi:** Membutuhkan Token
-* **Otorisasi Role:** `ADMIN`
+
+- **Endpoint:** `DELETE /api/areas/:id`
+- **Authentikasi:** Membutuhkan Token
+- **Otorisasi Role:** `ADMIN`
 
 **Contoh Request:**
+
 - **Headers:** `Authorization: Bearer <access_token>`
 - **URL Path Params:** `id` (string, UUID)
 
 **Contoh Response Sukses (200 OK):**
+
 ```json
 {
   "success": true,
@@ -365,6 +407,7 @@ Modul ini mengelola data wilayah/daerah (misal: "Tangerang Selatan", "Jakarta Se
 ```
 
 **Contoh Response Gagal (400 Bad Request - Masih Terikat Kolam):**
+
 ```json
 {
   "success": false,
@@ -379,16 +422,19 @@ Modul ini mengelola data wilayah/daerah (misal: "Tangerang Selatan", "Jakarta Se
 Modul ini mengelola data titik kolam renang yang bekerja sama dengan PT Tirya Lumba, termasuk katalog ringkas untuk Landing Page.
 
 ### 4.1 Katalog Lokasi Publik (Landing Page)
-* **Endpoint:** `GET /api/locations/public`
-* **Authentikasi:** Tidak Butuh
-* **Otorisasi Role:** `PUBLIC`
+
+- **Endpoint:** `GET /api/locations/public`
+- **Authentikasi:** Tidak Butuh
+- **Otorisasi Role:** `PUBLIC`
 
 **Contoh Request:**
+
 - **Query Params:** `?page=1&limit=8`
-  - `page` *(number, optional, default: 1)* - Halaman pagination
-  - `limit` *(number, optional, default: 8, max: 50)* - Jumlah item per halaman
+  - `page` _(number, optional, default: 1)_ - Halaman pagination
+  - `limit` _(number, optional, default: 8, max: 50)_ - Jumlah item per halaman
 
 **Contoh Response Sukses (200 OK):**
+
 ```json
 {
   "success": true,
@@ -418,6 +464,7 @@ Modul ini mengelola data titik kolam renang yang bekerja sama dengan PT Tirya Lu
 ```
 
 **Contoh Response Gagal (400 Bad Request):**
+
 ```json
 {
   "success": false,
@@ -428,14 +475,17 @@ Modul ini mengelola data titik kolam renang yang bekerja sama dengan PT Tirya Lu
 ---
 
 ### 4.2 Menampilkan Seluruh Data Lokasi (Admin/Internal)
-* **Endpoint:** `GET /api/locations`
-* **Authentikasi:** Tidak Butuh
-* **Otorisasi Role:** `PUBLIC`
+
+- **Endpoint:** `GET /api/locations`
+- **Authentikasi:** Tidak Butuh
+- **Otorisasi Role:** `PUBLIC`
 
 **Contoh Request:**
+
 - **Headers:** Tidak membutuhkan header autentikasi
 
 **Contoh Response Sukses (200 OK):**
+
 ```json
 {
   "success": true,
@@ -454,14 +504,17 @@ Modul ini mengelola data titik kolam renang yang bekerja sama dengan PT Tirya Lu
 ---
 
 ### 4.3 Menampilkan Detail Lokasi Berdasarkan ID
-* **Endpoint:** `GET /api/locations/:id`
-* **Authentikasi:** Tidak Butuh
-* **Otorisasi Role:** `PUBLIC`
+
+- **Endpoint:** `GET /api/locations/:id`
+- **Authentikasi:** Tidak Butuh
+- **Otorisasi Role:** `PUBLIC`
 
 **Contoh Request:**
+
 - **URL Path Params:** `id` (string, UUID)
 
 **Contoh Response Sukses (200 OK):**
+
 ```json
 {
   "success": true,
@@ -476,6 +529,7 @@ Modul ini mengelola data titik kolam renang yang bekerja sama dengan PT Tirya Lu
 ```
 
 **Contoh Response Gagal (404 Not Found):**
+
 ```json
 {
   "success": false,
@@ -486,15 +540,18 @@ Modul ini mengelola data titik kolam renang yang bekerja sama dengan PT Tirya Lu
 ---
 
 ### 4.4 Tambah Lokasi Kolam Baru
-* **Endpoint:** `POST /api/locations`
-* **Authentikasi:** Membutuhkan Token
-* **Otorisasi Role:** `ADMIN`
+
+- **Endpoint:** `POST /api/locations`
+- **Authentikasi:** Membutuhkan Token
+- **Otorisasi Role:** `ADMIN`
 
 **Contoh Request:**
+
 - **Headers:**
   - `Authorization: Bearer <access_token>`
   - `Content-Type: application/json`
 - **Request Body JSON:**
+
 ```json
 {
   "name": "Kolam Renang Graha Raya",
@@ -505,6 +562,7 @@ Modul ini mengelola data titik kolam renang yang bekerja sama dengan PT Tirya Lu
 ```
 
 **Contoh Response Sukses (201 Created):**
+
 ```json
 {
   "success": true,
@@ -520,6 +578,7 @@ Modul ini mengelola data titik kolam renang yang bekerja sama dengan PT Tirya Lu
 ```
 
 **Contoh Response Gagal (400 Bad Request):**
+
 ```json
 {
   "success": false,
@@ -528,6 +587,7 @@ Modul ini mengelola data titik kolam renang yang bekerja sama dengan PT Tirya Lu
 ```
 
 **Contoh Response Gagal (404 Not Found):**
+
 ```json
 {
   "success": false,
@@ -538,16 +598,19 @@ Modul ini mengelola data titik kolam renang yang bekerja sama dengan PT Tirya Lu
 ---
 
 ### 4.5 Perbarui Data Lokasi Kolam
-* **Endpoint:** `PUT /api/locations/:id`
-* **Authentikasi:** Membutuhkan Token
-* **Otorisasi Role:** `ADMIN`
+
+- **Endpoint:** `PUT /api/locations/:id`
+- **Authentikasi:** Membutuhkan Token
+- **Otorisasi Role:** `ADMIN`
 
 **Contoh Request:**
+
 - **Headers:**
   - `Authorization: Bearer <access_token>`
   - `Content-Type: application/json`
 - **URL Path Params:** `id` (string, UUID)
 - **Request Body JSON:**
+
 ```json
 {
   "name": "Kolam Renang Graha Raya Modern",
@@ -556,6 +619,7 @@ Modul ini mengelola data titik kolam renang yang bekerja sama dengan PT Tirya Lu
 ```
 
 **Contoh Response Sukses (200 OK):**
+
 ```json
 {
   "success": true,
@@ -571,6 +635,7 @@ Modul ini mengelola data titik kolam renang yang bekerja sama dengan PT Tirya Lu
 ```
 
 **Contoh Response Gagal (404 Not Found):**
+
 ```json
 {
   "success": false,
@@ -581,15 +646,18 @@ Modul ini mengelola data titik kolam renang yang bekerja sama dengan PT Tirya Lu
 ---
 
 ### 4.6 Hapus Lokasi Kolam
-* **Endpoint:** `DELETE /api/locations/:id`
-* **Authentikasi:** Membutuhkan Token
-* **Otorisasi Role:** `ADMIN`
+
+- **Endpoint:** `DELETE /api/locations/:id`
+- **Authentikasi:** Membutuhkan Token
+- **Otorisasi Role:** `ADMIN`
 
 **Contoh Request:**
+
 - **Headers:** `Authorization: Bearer <access_token>`
 - **URL Path Params:** `id` (string, UUID)
 
 **Contoh Response Sukses (200 OK):**
+
 ```json
 {
   "success": true,
@@ -598,6 +666,7 @@ Modul ini mengelola data titik kolam renang yang bekerja sama dengan PT Tirya Lu
 ```
 
 **Contoh Response Gagal (400 Bad Request):**
+
 ```json
 {
   "success": false,
@@ -612,14 +681,17 @@ Modul ini mengelola data titik kolam renang yang bekerja sama dengan PT Tirya Lu
 Modul ini mengelola paket les renang (misal: Reguler, Privat, Prestasi) dan nominal tarif harga per lokasi kolam.
 
 ### 5.1 Menampilkan Seluruh Paket Les
-* **Endpoint:** `GET /api/packages`
-* **Authentikasi:** Tidak Butuh
-* **Otorisasi Role:** `PUBLIC`
+
+- **Endpoint:** `GET /api/packages`
+- **Authentikasi:** Tidak Butuh
+- **Otorisasi Role:** `PUBLIC`
 
 **Contoh Request:**
+
 - **Headers:** Tidak membutuhkan header autentikasi
 
 **Contoh Response Sukses (200 OK):**
+
 ```json
 {
   "success": true,
@@ -643,14 +715,17 @@ Modul ini mengelola paket les renang (misal: Reguler, Privat, Prestasi) dan nomi
 ---
 
 ### 5.2 Menampilkan Detail Paket Berdasarkan ID
-* **Endpoint:** `GET /api/packages/:id`
-* **Authentikasi:** Tidak Butuh
-* **Otorisasi Role:** `PUBLIC`
+
+- **Endpoint:** `GET /api/packages/:id`
+- **Authentikasi:** Tidak Butuh
+- **Otorisasi Role:** `PUBLIC`
 
 **Contoh Request:**
+
 - **URL Path Params:** `id` (string, UUID)
 
 **Contoh Response Sukses (200 OK):**
+
 ```json
 {
   "success": true,
@@ -666,6 +741,7 @@ Modul ini mengelola paket les renang (misal: Reguler, Privat, Prestasi) dan nomi
 ```
 
 **Contoh Response Gagal (404 Not Found):**
+
 ```json
 {
   "success": false,
@@ -676,15 +752,18 @@ Modul ini mengelola paket les renang (misal: Reguler, Privat, Prestasi) dan nomi
 ---
 
 ### 5.3 Tambah Paket Les Baru
-* **Endpoint:** `POST /api/packages`
-* **Authentikasi:** Membutuhkan Token
-* **Otorisasi Role:** `ADMIN`
+
+- **Endpoint:** `POST /api/packages`
+- **Authentikasi:** Membutuhkan Token
+- **Otorisasi Role:** `ADMIN`
 
 **Contoh Request:**
+
 - **Headers:**
   - `Authorization: Bearer <access_token>`
   - `Content-Type: application/json`
 - **Request Body JSON:**
+
 ```json
 {
   "locationId": "a898fd3b-7fee-4479-b5f7-19624b25d614",
@@ -695,6 +774,7 @@ Modul ini mengelola paket les renang (misal: Reguler, Privat, Prestasi) dan nomi
 ```
 
 **Contoh Response Sukses (201 Created):**
+
 ```json
 {
   "success": true,
@@ -709,6 +789,7 @@ Modul ini mengelola paket les renang (misal: Reguler, Privat, Prestasi) dan nomi
 ```
 
 **Contoh Response Gagal (400 Bad Request):**
+
 ```json
 {
   "success": false,
@@ -719,16 +800,19 @@ Modul ini mengelola paket les renang (misal: Reguler, Privat, Prestasi) dan nomi
 ---
 
 ### 5.4 Perbarui Data Paket Les
-* **Endpoint:** `PUT /api/packages/:id`
-* **Authentikasi:** Membutuhkan Token
-* **Otorisasi Role:** `ADMIN`
+
+- **Endpoint:** `PUT /api/packages/:id`
+- **Authentikasi:** Membutuhkan Token
+- **Otorisasi Role:** `ADMIN`
 
 **Contoh Request:**
+
 - **Headers:**
   - `Authorization: Bearer <access_token>`
   - `Content-Type: application/json`
 - **URL Path Params:** `id` (string, UUID)
 - **Request Body JSON:**
+
 ```json
 {
   "price": 375000
@@ -736,6 +820,7 @@ Modul ini mengelola paket les renang (misal: Reguler, Privat, Prestasi) dan nomi
 ```
 
 **Contoh Response Sukses (200 OK):**
+
 ```json
 {
   "success": true,
@@ -750,6 +835,7 @@ Modul ini mengelola paket les renang (misal: Reguler, Privat, Prestasi) dan nomi
 ```
 
 **Contoh Response Gagal (404 Not Found):**
+
 ```json
 {
   "success": false,
@@ -760,15 +846,18 @@ Modul ini mengelola paket les renang (misal: Reguler, Privat, Prestasi) dan nomi
 ---
 
 ### 5.5 Hapus Data Paket Les
-* **Endpoint:** `DELETE /api/packages/:id`
-* **Authentikasi:** Membutuhkan Token
-* **Otorisasi Role:** `ADMIN`
+
+- **Endpoint:** `DELETE /api/packages/:id`
+- **Authentikasi:** Membutuhkan Token
+- **Otorisasi Role:** `ADMIN`
 
 **Contoh Request:**
+
 - **Headers:** `Authorization: Bearer <access_token>`
 - **URL Path Params:** `id` (string, UUID)
 
 **Contoh Response Sukses (200 OK):**
+
 ```json
 {
   "success": true,
@@ -777,6 +866,7 @@ Modul ini mengelola paket les renang (misal: Reguler, Privat, Prestasi) dan nomi
 ```
 
 **Contoh Response Gagal (404 Not Found):**
+
 ```json
 {
   "success": false,
@@ -791,16 +881,19 @@ Modul ini mengelola paket les renang (misal: Reguler, Privat, Prestasi) dan nomi
 Modul ini mengelola master jadwal sesi jam operasional les renang (hari, jam mulai, jam selesai) baik yang berlaku global maupun spesifik per lokasi kolam.
 
 ### 6.1 Menampilkan Sesi Berdasarkan Lokasi & Hari
-* **Endpoint:** `GET /api/sessions`
-* **Authentikasi:** Tidak Butuh
-* **Otorisasi Role:** `PUBLIC`
+
+- **Endpoint:** `GET /api/sessions`
+- **Authentikasi:** Tidak Butuh
+- **Otorisasi Role:** `PUBLIC`
 
 **Contoh Request:**
+
 - **Query Params:** `?locationId=a898fd3b-7fee-4479-b5f7-19624b25d614&dayOfWeek=Senin`
-  - `locationId` *(string, UUID, required)* - ID Lokasi kolam
-  - `dayOfWeek` *(string, required)* - Nama hari (contoh: "Senin", "Selasa", dll)
+  - `locationId` _(string, UUID, required)_ - ID Lokasi kolam
+  - `dayOfWeek` _(string, required)_ - Nama hari (contoh: "Senin", "Selasa", dll)
 
 **Contoh Response Sukses (200 OK):**
+
 ```json
 {
   "success": true,
@@ -826,6 +919,7 @@ Modul ini mengelola master jadwal sesi jam operasional les renang (hari, jam mul
 ```
 
 **Contoh Response Gagal (400 Bad Request):**
+
 ```json
 {
   "success": false,
@@ -836,14 +930,17 @@ Modul ini mengelola master jadwal sesi jam operasional les renang (hari, jam mul
 ---
 
 ### 6.2 Menampilkan Detail Sesi Berdasarkan ID
-* **Endpoint:** `GET /api/sessions/:id`
-* **Authentikasi:** Tidak Butuh
-* **Otorisasi Role:** `PUBLIC`
+
+- **Endpoint:** `GET /api/sessions/:id`
+- **Authentikasi:** Tidak Butuh
+- **Otorisasi Role:** `PUBLIC`
 
 **Contoh Request:**
+
 - **URL Path Params:** `id` (string, UUID)
 
 **Contoh Response Sukses (200 OK):**
+
 ```json
 {
   "success": true,
@@ -859,6 +956,7 @@ Modul ini mengelola master jadwal sesi jam operasional les renang (hari, jam mul
 ```
 
 **Contoh Response Gagal (404 Not Found):**
+
 ```json
 {
   "success": false,
@@ -869,15 +967,18 @@ Modul ini mengelola master jadwal sesi jam operasional les renang (hari, jam mul
 ---
 
 ### 6.3 Tambah Sesi Waktu Baru
-* **Endpoint:** `POST /api/sessions`
-* **Authentikasi:** Membutuhkan Token
-* **Otorisasi Role:** `ADMIN`
+
+- **Endpoint:** `POST /api/sessions`
+- **Authentikasi:** Membutuhkan Token
+- **Otorisasi Role:** `ADMIN`
 
 **Contoh Request:**
+
 - **Headers:**
   - `Authorization: Bearer <access_token>`
   - `Content-Type: application/json`
 - **Request Body JSON:**
+
 ```json
 {
   "sessionName": "Sesi 1",
@@ -889,6 +990,7 @@ Modul ini mengelola master jadwal sesi jam operasional les renang (hari, jam mul
 ```
 
 **Contoh Response Sukses (201 Created):**
+
 ```json
 {
   "success": true,
@@ -905,6 +1007,7 @@ Modul ini mengelola master jadwal sesi jam operasional les renang (hari, jam mul
 ```
 
 **Contoh Response Gagal (400 Bad Request):**
+
 ```json
 {
   "success": false,
@@ -915,16 +1018,19 @@ Modul ini mengelola master jadwal sesi jam operasional les renang (hari, jam mul
 ---
 
 ### 6.4 Perbarui Data Sesi Waktu
-* **Endpoint:** `PUT /api/sessions/:id`
-* **Authentikasi:** Membutuhkan Token
-* **Otorisasi Role:** `ADMIN`
+
+- **Endpoint:** `PUT /api/sessions/:id`
+- **Authentikasi:** Membutuhkan Token
+- **Otorisasi Role:** `ADMIN`
 
 **Contoh Request:**
+
 - **Headers:**
   - `Authorization: Bearer <access_token>`
   - `Content-Type: application/json`
 - **URL Path Params:** `id` (string, UUID)
 - **Request Body JSON:**
+
 ```json
 {
   "startTime": "08:30",
@@ -933,6 +1039,7 @@ Modul ini mengelola master jadwal sesi jam operasional les renang (hari, jam mul
 ```
 
 **Contoh Response Sukses (200 OK):**
+
 ```json
 {
   "success": true,
@@ -949,6 +1056,7 @@ Modul ini mengelola master jadwal sesi jam operasional les renang (hari, jam mul
 ```
 
 **Contoh Response Gagal (404 Not Found):**
+
 ```json
 {
   "success": false,
@@ -959,15 +1067,18 @@ Modul ini mengelola master jadwal sesi jam operasional les renang (hari, jam mul
 ---
 
 ### 6.5 Hapus Data Sesi Waktu
-* **Endpoint:** `DELETE /api/sessions/:id`
-* **Authentikasi:** Membutuhkan Token
-* **Otorisasi Role:** `ADMIN`
+
+- **Endpoint:** `DELETE /api/sessions/:id`
+- **Authentikasi:** Membutuhkan Token
+- **Otorisasi Role:** `ADMIN`
 
 **Contoh Request:**
+
 - **Headers:** `Authorization: Bearer <access_token>`
 - **URL Path Params:** `id` (string, UUID)
 
 **Contoh Response Sukses (200 OK):**
+
 ```json
 {
   "success": true,
@@ -976,6 +1087,7 @@ Modul ini mengelola master jadwal sesi jam operasional les renang (hari, jam mul
 ```
 
 **Contoh Response Gagal (404 Not Found):**
+
 ```json
 {
   "success": false,
@@ -992,15 +1104,18 @@ Modul ini dikhususkan bagi Super Admin untuk mengelola akun User berstatus `POOL
 > **Catatan Otorisasi:** Seluruh endpoint di modul ini dilindungi di tingkat router menggunakan `authMiddleware` dan `authorize('ADMIN')`.
 
 ### 7.1 Menampilkan Seluruh Pengelola Kolam
-* **Endpoint:** `GET /api/pool-managers`
-* **Authentikasi:** Membutuhkan Token
-* **Otorisasi Role:** `ADMIN`
+
+- **Endpoint:** `GET /api/pool-managers`
+- **Authentikasi:** Membutuhkan Token
+- **Otorisasi Role:** `ADMIN`
 
 **Contoh Request:**
+
 - **Headers:** `Authorization: Bearer <access_token>`
-- **Query Params:** `?locationId=a898fd3b-7fee-4479-b5f7-19624b25d614` *(opsional, untuk filter spesifik kolam)*
+- **Query Params:** `?locationId=a898fd3b-7fee-4479-b5f7-19624b25d614` _(opsional, untuk filter spesifik kolam)_
 
 **Contoh Response Sukses (200 OK):**
+
 ```json
 {
   "success": true,
@@ -1027,6 +1142,7 @@ Modul ini dikhususkan bagi Super Admin untuk mengelola akun User berstatus `POOL
 ```
 
 **Contoh Response Gagal (401 Unauthorized):**
+
 ```json
 {
   "success": false,
@@ -1035,6 +1151,7 @@ Modul ini dikhususkan bagi Super Admin untuk mengelola akun User berstatus `POOL
 ```
 
 **Contoh Response Gagal (403 Forbidden):**
+
 ```json
 {
   "success": false,
@@ -1045,15 +1162,18 @@ Modul ini dikhususkan bagi Super Admin untuk mengelola akun User berstatus `POOL
 ---
 
 ### 7.2 Menampilkan Detail Pengelola Kolam Berdasarkan ID
-* **Endpoint:** `GET /api/pool-managers/:id`
-* **Authentikasi:** Membutuhkan Token
-* **Otorisasi Role:** `ADMIN`
+
+- **Endpoint:** `GET /api/pool-managers/:id`
+- **Authentikasi:** Membutuhkan Token
+- **Otorisasi Role:** `ADMIN`
 
 **Contoh Request:**
+
 - **Headers:** `Authorization: Bearer <access_token>`
 - **URL Path Params:** `id` (string, UUID)
 
 **Contoh Response Sukses (200 OK):**
+
 ```json
 {
   "success": true,
@@ -1078,6 +1198,7 @@ Modul ini dikhususkan bagi Super Admin untuk mengelola akun User berstatus `POOL
 ```
 
 **Contoh Response Gagal (404 Not Found):**
+
 ```json
 {
   "success": false,
@@ -1088,15 +1209,18 @@ Modul ini dikhususkan bagi Super Admin untuk mengelola akun User berstatus `POOL
 ---
 
 ### 7.3 Tambah Pengelola Kolam Baru
-* **Endpoint:** `POST /api/pool-managers`
-* **Authentikasi:** Membutuhkan Token
-* **Otorisasi Role:** `ADMIN`
+
+- **Endpoint:** `POST /api/pool-managers`
+- **Authentikasi:** Membutuhkan Token
+- **Otorisasi Role:** `ADMIN`
 
 **Contoh Request:**
+
 - **Headers:**
   - `Authorization: Bearer <access_token>`
   - `Content-Type: application/json`
 - **Request Body JSON:**
+
 ```json
 {
   "fullName": "Ahmad Subarjo",
@@ -1109,6 +1233,7 @@ Modul ini dikhususkan bagi Super Admin untuk mengelola akun User berstatus `POOL
 ```
 
 **Contoh Response Sukses (201 Created):**
+
 ```json
 {
   "success": true,
@@ -1134,6 +1259,7 @@ Modul ini dikhususkan bagi Super Admin untuk mengelola akun User berstatus `POOL
 ```
 
 **Contoh Response Gagal (400 Bad Request):**
+
 ```json
 {
   "success": false,
@@ -1142,6 +1268,7 @@ Modul ini dikhususkan bagi Super Admin untuk mengelola akun User berstatus `POOL
 ```
 
 **Contoh Response Gagal (404 Not Found):**
+
 ```json
 {
   "success": false,
@@ -1152,16 +1279,19 @@ Modul ini dikhususkan bagi Super Admin untuk mengelola akun User berstatus `POOL
 ---
 
 ### 7.4 Perbarui Data Pengelola Kolam
-* **Endpoint:** `PUT /api/pool-managers/:id`
-* **Authentikasi:** Membutuhkan Token
-* **Otorisasi Role:** `ADMIN`
+
+- **Endpoint:** `PUT /api/pool-managers/:id`
+- **Authentikasi:** Membutuhkan Token
+- **Otorisasi Role:** `ADMIN`
 
 **Contoh Request:**
+
 - **Headers:**
   - `Authorization: Bearer <access_token>`
   - `Content-Type: application/json`
 - **URL Path Params:** `id` (string, UUID)
 - **Request Body JSON:**
+
 ```json
 {
   "fullName": "Ahmad Subarjo M.Pd",
@@ -1170,6 +1300,7 @@ Modul ini dikhususkan bagi Super Admin untuk mengelola akun User berstatus `POOL
 ```
 
 **Contoh Response Sukses (200 OK):**
+
 ```json
 {
   "success": true,
@@ -1195,6 +1326,7 @@ Modul ini dikhususkan bagi Super Admin untuk mengelola akun User berstatus `POOL
 ```
 
 **Contoh Response Gagal (404 Not Found):**
+
 ```json
 {
   "success": false,
@@ -1205,15 +1337,18 @@ Modul ini dikhususkan bagi Super Admin untuk mengelola akun User berstatus `POOL
 ---
 
 ### 7.5 Hapus Data Pengelola Kolam
-* **Endpoint:** `DELETE /api/pool-managers/:id`
-* **Authentikasi:** Membutuhkan Token
-* **Otorisasi Role:** `ADMIN`
+
+- **Endpoint:** `DELETE /api/pool-managers/:id`
+- **Authentikasi:** Membutuhkan Token
+- **Otorisasi Role:** `ADMIN`
 
 **Contoh Request:**
+
 - **Headers:** `Authorization: Bearer <access_token>`
 - **URL Path Params:** `id` (string, UUID)
 
 **Contoh Response Sukses (200 OK):**
+
 ```json
 {
   "success": true,
@@ -1222,6 +1357,7 @@ Modul ini dikhususkan bagi Super Admin untuk mengelola akun User berstatus `POOL
 ```
 
 **Contoh Response Gagal (404 Not Found):**
+
 ```json
 {
   "success": false,
@@ -1236,18 +1372,21 @@ Modul ini dikhususkan bagi Super Admin untuk mengelola akun User berstatus `POOL
 Modul ini menangani pencarian ketersediaan instruktur berdasarkan kuota jadwal murid (publik) serta portal manajemen guru bagi Super Admin dan Pool Manager.
 
 ### 8.1 Cek Ketersediaan Instruktur (Booking Flow)
-* **Endpoint:** `GET /api/instructor/available`
-* **Authentikasi:** Tidak Butuh
-* **Otorisasi Role:** `PUBLIC`
+
+- **Endpoint:** `GET /api/instructor/available`
+- **Authentikasi:** Tidak Butuh
+- **Otorisasi Role:** `PUBLIC`
 
 **Contoh Request:**
+
 - **Query Params:** `?locationId=a898fd3b-7fee-4479-b5f7-19624b25d614&dayOfWeek=Senin&sessionName=Sesi%201&packageType=REGULER`
-  - `locationId` *(string, UUID, required)* - ID Lokasi kolam
-  - `dayOfWeek` *(string, required)* - Hari mengajar (contoh: "Senin")
-  - `sessionName` *(string, required)* - Nama sesi (contoh: "Sesi 1")
-  - `packageType` *(enum: 'REGULER' | 'PRIVAT', optional, default: 'REGULER')* - Menentukan kapasitas maksimal (Privat = 1 murid, Reguler = 5 murid)
+  - `locationId` _(string, UUID, required)_ - ID Lokasi kolam
+  - `dayOfWeek` _(string, required)_ - Hari mengajar (contoh: "Senin")
+  - `sessionName` _(string, required)_ - Nama sesi (contoh: "Sesi 1")
+  - `packageType` _(enum: 'REGULER' | 'PRIVAT', optional, default: 'REGULER')_ - Menentukan kapasitas maksimal (Privat = 1 murid, Reguler = 5 murid)
 
 **Contoh Response Sukses (200 OK):**
+
 ```json
 {
   "success": true,
@@ -1266,6 +1405,7 @@ Modul ini menangani pencarian ketersediaan instruktur berdasarkan kuota jadwal m
 ```
 
 **Contoh Response Gagal (400 Bad Request):**
+
 ```json
 {
   "success": false,
@@ -1276,18 +1416,21 @@ Modul ini menangani pencarian ketersediaan instruktur berdasarkan kuota jadwal m
 ---
 
 ### 8.2 Daftar Instruktur untuk Dasbor Manajemen
-* **Endpoint:** `GET /api/instructor/management`
-* **Authentikasi:** Membutuhkan Token
-* **Otorisasi Role:** `ADMIN`, `POOL_MANAGER`
-*(Catatan: Pool Manager hanya akan menerima data instruktur yang terikat pada lokasi kolamnya).*
+
+- **Endpoint:** `GET /api/instructor/management`
+- **Authentikasi:** Membutuhkan Token
+- **Otorisasi Role:** `ADMIN`, `POOL_MANAGER`
+  _(Catatan: Pool Manager hanya akan menerima data instruktur yang terikat pada lokasi kolamnya)._
 
 **Contoh Request:**
+
 - **Headers:** `Authorization: Bearer <access_token>`
 - **Query Params:** `?page=1&limit=10`
-  - `page` *(number, optional, default: 1)*
-  - `limit` *(number, optional, default: 10, max: 100)*
+  - `page` _(number, optional, default: 1)_
+  - `limit` _(number, optional, default: 10, max: 100)_
 
 **Contoh Response Sukses (200 OK):**
+
 ```json
 {
   "success": true,
@@ -1310,6 +1453,7 @@ Modul ini menangani pencarian ketersediaan instruktur berdasarkan kuota jadwal m
 ```
 
 **Contoh Response Gagal (401 Unauthorized):**
+
 ```json
 {
   "success": false,
@@ -1318,6 +1462,7 @@ Modul ini menangani pencarian ketersediaan instruktur berdasarkan kuota jadwal m
 ```
 
 **Contoh Response Gagal (403 Forbidden):**
+
 ```json
 {
   "success": false,
@@ -1328,15 +1473,18 @@ Modul ini menangani pencarian ketersediaan instruktur berdasarkan kuota jadwal m
 ---
 
 ### 8.3 Detail Profil Instruktur untuk Dasbor Manajemen
-* **Endpoint:** `GET /api/instructor/management/:id`
-* **Authentikasi:** Membutuhkan Token
-* **Otorisasi Role:** `ADMIN`, `POOL_MANAGER`
+
+- **Endpoint:** `GET /api/instructor/management/:id`
+- **Authentikasi:** Membutuhkan Token
+- **Otorisasi Role:** `ADMIN`, `POOL_MANAGER`
 
 **Contoh Request:**
+
 - **Headers:** `Authorization: Bearer <access_token>`
 - **URL Path Params:** `id` (string, UUID)
 
 **Contoh Response Sukses (200 OK):**
+
 ```json
 {
   "success": true,
@@ -1369,6 +1517,7 @@ Modul ini menangani pencarian ketersediaan instruktur berdasarkan kuota jadwal m
 ```
 
 **Contoh Response Gagal (404 Not Found):**
+
 ```json
 {
   "success": false,
@@ -1382,21 +1531,24 @@ Modul ini menangani pencarian ketersediaan instruktur berdasarkan kuota jadwal m
 
 Modul ini menangani upload file statis secara lokal menggunakan Multer sebelum data pendaftaran di-submit ke sistem.
 
-* **Batas Maksimal Ukuran File:** 5 MB
-* **Format Gambar yang Diizinkan:** JPG, JPEG, PNG, WEBP
-* **Format Dokumen CV yang Diizinkan:** PDF
+- **Batas Maksimal Ukuran File:** 5 MB
+- **Format Gambar yang Diizinkan:** JPG, JPEG, PNG, WEBP
+- **Format Dokumen CV yang Diizinkan:** PDF
 
 ### 9.1 Upload Foto Profil Siswa
-* **Endpoint:** `POST /api/upload-file/student/profil`
-* **Authentikasi:** Tidak Butuh
-* **Otorisasi Role:** `PUBLIC`
+
+- **Endpoint:** `POST /api/upload-file/student/profil`
+- **Authentikasi:** Tidak Butuh
+- **Otorisasi Role:** `PUBLIC`
 
 **Contoh Request:**
+
 - **Headers:** `Content-Type: multipart/form-data`
 - **Form Data (multipart):**
   - `profilePicture`: `[Binary Image File]`
 
 **Contoh Response Sukses (200 OK):**
+
 ```json
 {
   "success": true,
@@ -1408,6 +1560,7 @@ Modul ini menangani upload file statis secara lokal menggunakan Multer sebelum d
 ```
 
 **Contoh Response Gagal (400 Bad Request):**
+
 ```json
 {
   "success": false,
@@ -1418,16 +1571,19 @@ Modul ini menangani upload file statis secara lokal menggunakan Multer sebelum d
 ---
 
 ### 9.2 Upload Bukti Pembayaran Siswa
-* **Endpoint:** `POST /api/upload-file/student/payment`
-* **Authentikasi:** Tidak Butuh
-* **Otorisasi Role:** `PUBLIC`
+
+- **Endpoint:** `POST /api/upload-file/student/payment`
+- **Authentikasi:** Tidak Butuh
+- **Otorisasi Role:** `PUBLIC`
 
 **Contoh Request:**
+
 - **Headers:** `Content-Type: multipart/form-data`
 - **Form Data (multipart):**
   - `profilePicture`: `[Binary Image File Bukti Bayar]`
 
 **Contoh Response Sukses (200 OK):**
+
 ```json
 {
   "success": true,
@@ -1436,6 +1592,7 @@ Modul ini menangani upload file statis secara lokal menggunakan Multer sebelum d
 ```
 
 **Contoh Response Gagal (400 Bad Request):**
+
 ```json
 {
   "success": false,
@@ -1446,11 +1603,13 @@ Modul ini menangani upload file statis secara lokal menggunakan Multer sebelum d
 ---
 
 ### 9.3 Upload Dokumen Pelatih (CV & Foto)
-* **Endpoint:** `POST /api/upload-file/instructor`
-* **Authentikasi:** Tidak Butuh
-* **Otorisasi Role:** `PUBLIC`
+
+- **Endpoint:** `POST /api/upload-file/instructor`
+- **Authentikasi:** Tidak Butuh
+- **Otorisasi Role:** `PUBLIC`
 
 **Contoh Request:**
+
 - **Headers:** `Content-Type: multipart/form-data`
 - **Form Data (multipart):**
   - `cv`: `[Binary PDF File]` (Wajib PDF)
@@ -1458,6 +1617,7 @@ Modul ini menangani upload file statis secara lokal menggunakan Multer sebelum d
   - `paymentProof`: `[Binary Image File]` (Opsional)
 
 **Contoh Response Sukses (200 OK):**
+
 ```json
 {
   "success": true,
@@ -1466,6 +1626,7 @@ Modul ini menangani upload file statis secara lokal menggunakan Multer sebelum d
 ```
 
 **Contoh Response Gagal (400 Bad Request):**
+
 ```json
 {
   "success": false,
@@ -1480,15 +1641,18 @@ Modul ini menangani upload file statis secara lokal menggunakan Multer sebelum d
 Modul ini menangani submit formulir pendaftaran siswa baru (booking kelas) serta pendaftaran pelatih baru. Kedua endpoint ini memproses data secara atomic menggunakan database transaction (Prisma `$transaction`).
 
 ### 10.1 Pendaftaran Murid Baru (Booking Kelas)
-* **Endpoint:** `POST /api/register/student`
-* **Authentikasi:** Membutuhkan Token
-* **Otorisasi Role:** `STUDENT` (atau pengguna terautentikasi yang baru diverifikasi)
+
+- **Endpoint:** `POST /api/register/student`
+- **Authentikasi:** Membutuhkan Token
+- **Otorisasi Role:** `STUDENT` (atau pengguna terautentikasi yang baru diverifikasi)
 
 **Contoh Request:**
+
 - **Headers:**
   - `Authorization: Bearer <access_token>`
   - `Content-Type: application/json`
 - **Request Body JSON:**
+
 ```json
 {
   "profilePictureUrl": "uploads/profiles/profilePicture-1718900000.jpg",
@@ -1512,6 +1676,7 @@ Modul ini menangani submit formulir pendaftaran siswa baru (booking kelas) serta
 ```
 
 **Contoh Response Sukses (201 Created):**
+
 ```json
 {
   "success": true,
@@ -1525,6 +1690,7 @@ Modul ini menangani submit formulir pendaftaran siswa baru (booking kelas) serta
 ```
 
 **Contoh Response Gagal (400 Bad Request):**
+
 ```json
 {
   "success": false,
@@ -1533,6 +1699,7 @@ Modul ini menangani submit formulir pendaftaran siswa baru (booking kelas) serta
 ```
 
 **Contoh Response Gagal (404 Not Found):**
+
 ```json
 {
   "success": false,
@@ -1543,15 +1710,18 @@ Modul ini menangani submit formulir pendaftaran siswa baru (booking kelas) serta
 ---
 
 ### 10.2 Pendaftaran Instruktur Baru (Deklarasi Jadwal)
-* **Endpoint:** `POST /api/register/instructor`
-* **Authentikasi:** Membutuhkan Token
-* **Otorisasi Role:** `INSTRUCTOR` (atau pengguna terautentikasi yang mendaftar menjadi instruktur)
+
+- **Endpoint:** `POST /api/register/instructor`
+- **Authentikasi:** Membutuhkan Token
+- **Otorisasi Role:** `INSTRUCTOR` (atau pengguna terautentikasi yang mendaftar menjadi instruktur)
 
 **Contoh Request:**
+
 - **Headers:**
   - `Authorization: Bearer <access_token>`
   - `Content-Type: application/json`
 - **Request Body JSON:**
+
 ```json
 {
   "fullName": "Coach Bambang Pamungkas",
@@ -1580,6 +1750,7 @@ Modul ini menangani submit formulir pendaftaran siswa baru (booking kelas) serta
 ```
 
 **Contoh Response Sukses (201 Created):**
+
 ```json
 {
   "success": true,
@@ -1595,6 +1766,7 @@ Modul ini menangani submit formulir pendaftaran siswa baru (booking kelas) serta
 ```
 
 **Contoh Response Gagal (400 Bad Request):**
+
 ```json
 {
   "success": false,
@@ -1603,6 +1775,7 @@ Modul ini menangani submit formulir pendaftaran siswa baru (booking kelas) serta
 ```
 
 **Contoh Response Gagal (404 Not Found):**
+
 ```json
 {
   "success": false,
@@ -1614,42 +1787,42 @@ Modul ini menangani submit formulir pendaftaran siswa baru (booking kelas) serta
 
 ## 11. Matriks Otorisasi Endpoint (Cheat Sheet)
 
-| Endpoint | Method | Autentikasi | Role Diizinkan | Deskripsi Singkat |
-| :--- | :--- | :--- | :--- | :--- |
-| `/api/auth/register` | `POST` | Tidak Butuh | `PUBLIC` | Pendaftaran akun awal & kirim OTP |
-| `/api/auth/verify-otp` | `POST` | Tidak Butuh | `PUBLIC` | Verifikasi 6 digit OTP |
-| `/api/auth/login` | `POST` | Tidak Butuh | `PUBLIC` | Login akun & terbitkan JWT / cookie |
-| `/api/areas` | `GET` | Tidak Butuh | `PUBLIC` | Ambil semua area & jumlah kolam |
-| `/api/areas/:id` | `GET` | Tidak Butuh | `PUBLIC` | Ambil detail 1 area beserta kolamnya |
-| `/api/areas` | `POST` | Membutuhkan Token | `ADMIN` | Tambah master area baru |
-| `/api/areas/:id` | `PUT` | Membutuhkan Token | `ADMIN` | Update master data area |
-| `/api/areas/:id` | `DELETE` | Membutuhkan Token | `ADMIN` | Hapus area jika tidak ada relasi kolam |
-| `/api/locations/public` | `GET` | Tidak Butuh | `PUBLIC` | Katalog kolam ringkas + harga Reguler |
-| `/api/locations` | `GET` | Tidak Butuh | `PUBLIC` | Ambil semua lokasi kolam |
-| `/api/locations/:id` | `GET` | Tidak Butuh | `PUBLIC` | Ambil detail satu kolam renang |
-| `/api/locations` | `POST` | Membutuhkan Token | `ADMIN` | Tambah master lokasi kolam baru |
-| `/api/locations/:id` | `PUT` | Membutuhkan Token | `ADMIN` | Update data lokasi kolam |
-| `/api/locations/:id` | `DELETE` | Membutuhkan Token | `ADMIN` | Hapus lokasi kolam |
-| `/api/packages` | `GET` | Tidak Butuh | `PUBLIC` | Ambil semua paket les renang |
-| `/api/packages/:id` | `GET` | Tidak Butuh | `PUBLIC` | Ambil detail paket les renang |
-| `/api/packages` | `POST` | Membutuhkan Token | `ADMIN` | Tambah master paket les baru |
-| `/api/packages/:id` | `PUT` | Membutuhkan Token | `ADMIN` | Update paket les |
-| `/api/packages/:id` | `DELETE` | Membutuhkan Token | `ADMIN` | Hapus paket les |
-| `/api/sessions` | `GET` | Tidak Butuh | `PUBLIC` | Filter sesi berdasarkan lokasi & hari |
-| `/api/sessions/:id` | `GET` | Tidak Butuh | `PUBLIC` | Ambil detail satu sesi jam |
-| `/api/sessions` | `POST` | Membutuhkan Token | `ADMIN` | Tambah master sesi waktu |
-| `/api/sessions/:id` | `PUT` | Membutuhkan Token | `ADMIN` | Update master sesi waktu |
-| `/api/sessions/:id` | `DELETE` | Membutuhkan Token | `ADMIN` | Hapus master sesi waktu |
-| `/api/pool-managers` | `GET` | Membutuhkan Token | `ADMIN` | Ambil daftar user Pool Manager |
-| `/api/pool-managers/:id` | `GET` | Membutuhkan Token | `ADMIN` | Ambil detail user Pool Manager |
-| `/api/pool-managers` | `POST` | Membutuhkan Token | `ADMIN` | Daftarkan user Pool Manager baru |
-| `/api/pool-managers/:id` | `PUT` | Membutuhkan Token | `ADMIN` | Update data Pool Manager |
-| `/api/pool-managers/:id` | `DELETE` | Membutuhkan Token | `ADMIN` | Hapus user Pool Manager |
-| `/api/instructor/available` | `GET` | Tidak Butuh | `PUBLIC` | Cek ketersediaan guru & kapasitas |
-| `/api/instructor/management` | `GET` | Membutuhkan Token | `ADMIN`, `POOL_MANAGER` | Daftar guru untuk CMS dasbor |
-| `/api/instructor/management/:id`| `GET` | Membutuhkan Token | `ADMIN`, `POOL_MANAGER` | Detail profil instruktur untuk CMS |
-| `/api/upload-file/student/profil`| `POST` | Tidak Butuh | `PUBLIC` | Upload gambar foto profil siswa |
-| `/api/upload-file/student/payment`| `POST` | Tidak Butuh | `PUBLIC` | Upload gambar bukti transfer/bayar |
-| `/api/upload-file/instructor`| `POST` | Tidak Butuh | `PUBLIC` | Upload PDF CV dan foto instruktur |
-| `/api/register/student` | `POST` | Membutuhkan Token | `STUDENT` | Submit formulir booking pendaftaran murid |
-| `/api/register/instructor` | `POST` | Membutuhkan Token | `INSTRUCTOR` | Submit formulir & jadwal pelatih baru |
+| Endpoint                           | Method   | Autentikasi       | Role Diizinkan          | Deskripsi Singkat                         |
+| :--------------------------------- | :------- | :---------------- | :---------------------- | :---------------------------------------- |
+| `/api/auth/register`               | `POST`   | Tidak Butuh       | `PUBLIC`                | Pendaftaran akun awal & kirim OTP         |
+| `/api/auth/verify-otp`             | `POST`   | Tidak Butuh       | `PUBLIC`                | Verifikasi 6 digit OTP                    |
+| `/api/auth/login`                  | `POST`   | Tidak Butuh       | `PUBLIC`                | Login akun & terbitkan JWT / cookie       |
+| `/api/areas`                       | `GET`    | Tidak Butuh       | `PUBLIC`                | Ambil semua area & jumlah kolam           |
+| `/api/areas/:id`                   | `GET`    | Tidak Butuh       | `PUBLIC`                | Ambil detail 1 area beserta kolamnya      |
+| `/api/areas`                       | `POST`   | Membutuhkan Token | `ADMIN`                 | Tambah master area baru                   |
+| `/api/areas/:id`                   | `PUT`    | Membutuhkan Token | `ADMIN`                 | Update master data area                   |
+| `/api/areas/:id`                   | `DELETE` | Membutuhkan Token | `ADMIN`                 | Hapus area jika tidak ada relasi kolam    |
+| `/api/locations/public`            | `GET`    | Tidak Butuh       | `PUBLIC`                | Katalog kolam ringkas + harga Reguler     |
+| `/api/locations`                   | `GET`    | Tidak Butuh       | `PUBLIC`                | Ambil semua lokasi kolam                  |
+| `/api/locations/:id`               | `GET`    | Tidak Butuh       | `PUBLIC`                | Ambil detail satu kolam renang            |
+| `/api/locations`                   | `POST`   | Membutuhkan Token | `ADMIN`                 | Tambah master lokasi kolam baru           |
+| `/api/locations/:id`               | `PUT`    | Membutuhkan Token | `ADMIN`                 | Update data lokasi kolam                  |
+| `/api/locations/:id`               | `DELETE` | Membutuhkan Token | `ADMIN`                 | Hapus lokasi kolam                        |
+| `/api/packages`                    | `GET`    | Tidak Butuh       | `PUBLIC`                | Ambil semua paket les renang              |
+| `/api/packages/:id`                | `GET`    | Tidak Butuh       | `PUBLIC`                | Ambil detail paket les renang             |
+| `/api/packages`                    | `POST`   | Membutuhkan Token | `ADMIN`                 | Tambah master paket les baru              |
+| `/api/packages/:id`                | `PUT`    | Membutuhkan Token | `ADMIN`                 | Update paket les                          |
+| `/api/packages/:id`                | `DELETE` | Membutuhkan Token | `ADMIN`                 | Hapus paket les                           |
+| `/api/sessions`                    | `GET`    | Tidak Butuh       | `PUBLIC`                | Filter sesi berdasarkan lokasi & hari     |
+| `/api/sessions/:id`                | `GET`    | Tidak Butuh       | `PUBLIC`                | Ambil detail satu sesi jam                |
+| `/api/sessions`                    | `POST`   | Membutuhkan Token | `ADMIN`                 | Tambah master sesi waktu                  |
+| `/api/sessions/:id`                | `PUT`    | Membutuhkan Token | `ADMIN`                 | Update master sesi waktu                  |
+| `/api/sessions/:id`                | `DELETE` | Membutuhkan Token | `ADMIN`                 | Hapus master sesi waktu                   |
+| `/api/pool-managers`               | `GET`    | Membutuhkan Token | `ADMIN`                 | Ambil daftar user Pool Manager            |
+| `/api/pool-managers/:id`           | `GET`    | Membutuhkan Token | `ADMIN`                 | Ambil detail user Pool Manager            |
+| `/api/pool-managers`               | `POST`   | Membutuhkan Token | `ADMIN`                 | Daftarkan user Pool Manager baru          |
+| `/api/pool-managers/:id`           | `PUT`    | Membutuhkan Token | `ADMIN`                 | Update data Pool Manager                  |
+| `/api/pool-managers/:id`           | `DELETE` | Membutuhkan Token | `ADMIN`                 | Hapus user Pool Manager                   |
+| `/api/instructor/available`        | `GET`    | Tidak Butuh       | `PUBLIC`                | Cek ketersediaan guru & kapasitas         |
+| `/api/instructor/management`       | `GET`    | Membutuhkan Token | `ADMIN`, `POOL_MANAGER` | Daftar guru untuk CMS dasbor              |
+| `/api/instructor/management/:id`   | `GET`    | Membutuhkan Token | `ADMIN`, `POOL_MANAGER` | Detail profil instruktur untuk CMS        |
+| `/api/upload-file/student/profil`  | `POST`   | Tidak Butuh       | `PUBLIC`                | Upload gambar foto profil siswa           |
+| `/api/upload-file/student/payment` | `POST`   | Tidak Butuh       | `PUBLIC`                | Upload gambar bukti transfer/bayar        |
+| `/api/upload-file/instructor`      | `POST`   | Tidak Butuh       | `PUBLIC`                | Upload PDF CV dan foto instruktur         |
+| `/api/register/student`            | `POST`   | Membutuhkan Token | `STUDENT`               | Submit formulir booking pendaftaran murid |
+| `/api/register/instructor`         | `POST`   | Membutuhkan Token | `INSTRUCTOR`            | Submit formulir & jadwal pelatih baru     |

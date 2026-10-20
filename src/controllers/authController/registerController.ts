@@ -26,7 +26,7 @@ export const registerController = async (
   const { fullName, email, password } = req.body;
   try {
     // Memvalidasi req.body secara langsung
-    const validatedData = registerSchema.parse({ email, password });
+    const validatedData = registerSchema.parse({fullName, email, password });
 
     const otpCode = generateOtp();
     const otpExpiresAt = new Date(Date.now() + 5 * 60 * 1000);

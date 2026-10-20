@@ -24,6 +24,16 @@ export const loginController = async (
     // Cari User di Database
     const user = await prisma.user.findUnique({
       where: { email },
+      select: {
+        id: true,
+        email: true,
+        fullName: true,
+        role: true,
+        password: true,
+        isVerified: true,
+        isActive: true,
+        locationId: true,
+      },
     });
 
     if (!user) {
@@ -71,6 +81,7 @@ export const loginController = async (
     const userResponse = {
       userId: user.id,
       email: user.email,
+      fullName: user.fullName,
       role: user.role,
       ...(user.role === 'POOL_MANAGER' ? { locationId: user.locationId } : {}),
     };
