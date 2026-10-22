@@ -4,19 +4,21 @@ import fs from 'fs';
 
 const storage = multer.diskStorage({
   destination: (req, file, cb) => {
-    let folder = 'uploads/others';
+    let folder = 'public/uploads';
 
     if (file.fieldname === 'paymentProof') {
-      folder = 'uploads/payments';
+      folder = 'public/uploads/payments';
     } else if (file.fieldname === 'cv') {
-      folder = 'uploads/cvs';
+      folder = 'public/uploads/cvs';
     } else if (file.fieldname === 'profilePicture') {
-      folder = 'uploads/profiles';
+      folder = 'public/uploads/profiles';
     }
 
     if (!fs.existsSync(folder)) {
       fs.mkdirSync(folder, { recursive: true });
     }
+
+    cb(null, folder);
   },
 
   filename: (req, file, cb) => {
@@ -55,6 +57,6 @@ export const upload = multer({
   storage,
   fileFilter,
   limits: {
-    fileSize: 5 * 1024 * 1024, // Maksimal 5 MB
+    fileSize: 20 * 1024 * 1024, // Maksimal 20 MB
   },
 });

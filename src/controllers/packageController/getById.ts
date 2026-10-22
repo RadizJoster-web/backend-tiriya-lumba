@@ -17,8 +17,17 @@ export const getPackageById = async (
       });
     }
 
-    const getPackage = await prisma.package.findFirst({
+    const getPackage = await prisma.location.findFirst({
       where: { id },
+      select: {
+        packages: {
+          select: {
+            id: true,
+            type: true,
+            price: true,
+          },
+        },
+      },
     });
 
     if (!getPackage) {
@@ -30,7 +39,7 @@ export const getPackageById = async (
 
     return res.status(200).json({
       success: true,
-      data: { package: getPackage }, // Biarr return nya 'package' bukana 'get'
+      data: getPackage,
     });
   } catch (err) {
     next(err);

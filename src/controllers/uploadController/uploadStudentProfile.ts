@@ -15,15 +15,10 @@ export const uploadStudentProfile = async (
       ? profilePictureFile.path
       : null;
 
-    const bodyData = req.body;
-
     return res.status(200).json({
       success: true,
       message: 'upload profile berhasil.',
-      data: {
-        ...bodyData,
-        profilePictureUrl,
-      },
+      data: { profilePictureUrl },
     });
   } catch (err) {
     next(err);

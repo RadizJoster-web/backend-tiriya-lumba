@@ -8,12 +8,14 @@ export const getPackages = async (
 ) => {
   try {
     const packages = await prisma.package.findMany({
-      where: { type: 'Reguler' },
       select: {
+        id: true,
         price: true,
+        type: true,
         location: {
           // huruf kecil 'location'
           select: {
+            id: true,
             name: true,
             category: true,
             mapUrl: true,
