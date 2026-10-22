@@ -9,7 +9,7 @@ const verifyOtpSchema = z.object({
     .length(6, { message: 'Kode OTP harus berupa 6 digit angka' }),
 });
 
-export const verifyOtpController = async (
+export const verifyOtp = async (
   req: Request,
   res: Response,
   next: NextFunction,

@@ -12,7 +12,7 @@ const loginSchema = z.object({
   password: z.string().min(1, { message: 'Password tidak boleh kosong' }),
 });
 
-export const loginController = async (
+export const login = async (
   req: Request,
   res: Response,
   next: NextFunction,

@@ -18,7 +18,7 @@ const registerSchema = z.object({
     .max(12, { message: 'Password maksimal 12 karakter' }),
 });
 
-export const registerController = async (
+export const register = async (
   req: Request,
   res: Response,
   next: NextFunction,
