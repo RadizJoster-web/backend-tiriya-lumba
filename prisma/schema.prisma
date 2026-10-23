@@ -42,8 +42,8 @@ enum RegistrationType {
 
 model User {
   id                String             @id @default(uuid())
-  fullName          String // Tambahan Nama Lengkap
-  phone             String? // Tambahan No. Telepon
+  fullName          String
+  phone             String?
   email             String             @unique
   password          String
   role              Role
@@ -57,6 +57,7 @@ model User {
   studentProfile    StudentProfile?
   schedules         Schedule[]         @relation("InstructorSchedules")
   InstructorProfile InstructorProfile?
+  registrations     Registration[]
 }
 
 model Area {
@@ -87,30 +88,30 @@ model Location {
 model Package {
   id         String   @id @default(uuid())
   locationId String
-  type       String // Reguler, Privat, Prestasi, Ekskul[cite: 2]
+  type       String // Reguler, Privat, Prestasi, Ekskul
   price      Float
   location   Location @relation(fields: [locationId], references: [id])
 }
 
 model SessionTime {
   id          String  @id @default(uuid())
-  dayOfWeek   String // Senin, Selasa, dll.[cite: 2]
-  sessionName String // Sesi 1[cite: 2]
-  startTime   String // "09:00"[cite: 2]
-  endTime     String // "10:00"[cite: 2]
-  locationId  String? // Jika null, berlaku global. Jika terisi, spesifik kolam.[cite: 2]
+  dayOfWeek   String // Senin, Selasa, dll.
+  sessionName String // Sesi 1
+  startTime   String // "09:00"
+  endTime     String // "10:00"
+  locationId  String? // Jika null, berlaku global. Jika terisi, spesifik kolam.
 }
 
 model StudentProfile {
   id             String       @id @default(uuid())
   userId         String       @unique
-  fullName       String       // Nama lengkap murid / anak yang ikut les 
+  fullName       String // Nama lengkap murid / anak yang ikut les 
   birthPlace     String
   birthDate      DateTime
   gender         String
   address        String
   schoolOrOffice String
-  tshirtSize     String // XS, S, M, L, XL, XXL[cite: 3]
+  tshirtSize     String // XS, S, M, L, XL, XXL
   activeSessions Int          @default(0)
   user           User         @relation(fields: [userId], references: [id], onDelete: Cascade)
   attendances    Attendance[]
@@ -120,36 +121,38 @@ model InstructorProfile {
   id         String     @id @default(uuid())
   userId     String     @unique
   user       User       @relation(fields: [userId], references: [id], onDelete: Cascade)
-  shortBio   String?    @db.Text // Profil singkat (menggunakan Text agar bisa panjang)
-  license    String? // Lisensi (misal: "AIFO", "Lisensi D", dll)
-  experience String? // Pengalaman (misal: "5 Tahun")
+  shortBio   String?    @db.Text
+  birthDate  DateTime
+  license    String?
+  experience String?
   locations  Location[] @relation("InstructorLocations")
 }
 
 model Registration {
   id              String             @id @default(uuid())
-  userId          String // Referensi pendaftar[cite: 3]
+  userId          String
+  user            User               @relation(fields: [userId], references: [id], onDelete: Cascade)
   type            RegistrationType
   status          RegistrationStatus @default(PENDING)
-  rejectionReason String? // Wajib diisi admin jika status = REJECTED[cite: 3]
+  rejectionReason String?
 
-  // Data Pendaftaran Murid (Booking)[cite: 3]
+  // Data Pendaftaran Murid (Booking)
   packageId        String?
   locationId       String?
   instructorId     String?
-  firstMeetDate    DateTime? // Rencana pertemuan ke-1[cite: 3]
+  firstMeetDate    DateTime?
   firstMeetSession String?
 
-  // Data Pembayaran & File (Multer)[cite: 3]
+  // Data Pembayaran & File
   paymentMethod   PaymentMethod?
-  paymentProofUrl String? // Foto transfer / dokumentasi serah uang cash[cite: 3]
-  cvUrl           String? // CV (Pelatih)[cite: 4]
+  paymentProofUrl String?
+  cvUrl           String?
 }
 
 model Schedule {
   id           String   @id @default(uuid())
   instructorId String
-  instructor   User     @relation("InstructorSchedules", fields: [instructorId], references: [id]) // 👈 Tambahkan baris ini
+  instructor   User     @relation("InstructorSchedules", fields: [instructorId], references: [id])
   studentId    String?
   dayOfWeek    String
   sessionName  String
