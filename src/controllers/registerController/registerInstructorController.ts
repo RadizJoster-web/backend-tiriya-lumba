@@ -12,7 +12,7 @@ export const registerInstructorController = async (
     const data = registerInstructorSchema.parse(req.body);
 
     // 2. Ambil User ID dari Token JWT
-    const userId = (req as any).user.id;
+    const userId = (req as any).user.userId;
 
     // 3. Cek apakah user sudah terdaftar sebagai instruktur
     const existingInstructorProfile = await prisma.instructorProfile.findUnique(
@@ -92,7 +92,6 @@ export const registerInstructorController = async (
           type: 'NEW_INSTRUCTOR',
           status: 'PENDING',
           cvUrl: data.cvUrl,
-          photoUrl: data.profilePictureUrl || null,
         },
       });
 

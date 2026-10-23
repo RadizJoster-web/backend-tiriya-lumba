@@ -43,7 +43,7 @@ export const register = async (
       create: {
         email,
         password: hashedPassword,
-        fullName: '',
+        fullName: fullName,
         role: 'STUDENT',
         otpCode,
         otpExpiresAt,

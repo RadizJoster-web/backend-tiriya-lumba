@@ -143,7 +143,6 @@ model Registration {
   // Data Pembayaran & File (Multer)[cite: 3]
   paymentMethod   PaymentMethod?
   paymentProofUrl String? // Foto transfer / dokumentasi serah uang cash[cite: 3]
-  photoUrl        String? // Foto 4x6 (Siswa)[cite: 3]
   cvUrl           String? // CV (Pelatih)[cite: 4]
 }
 
