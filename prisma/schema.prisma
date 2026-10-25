@@ -50,6 +50,8 @@ model User {
   role              Role               @default(USER)
   otpCode           String?
   otpExpiresAt      DateTime?
+  resetToken        String?
+  resetTokenExpiresAt DateTime?
   isVerified        Boolean            @default(false)
   profilePictureUrl String?
   locationId        String?
