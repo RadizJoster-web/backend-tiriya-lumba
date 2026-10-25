@@ -1,18 +1,39 @@
-import nodemailer from 'nodemailer/lib/nodemailer';
+import nodemailer from 'nodemailer';
+import dotenv from 'dotenv';
 
-const transporter = nodemailer.createTransport({
-  host: process.env.SMTP_HOST,
-  port: Number(process.env.SMTP_PORT),
-  secure: true, // true untuk port 465, false untuk port lainnya
-  auth: {
-    user: process.env.SMTP_USER,
-    pass: process.env.SMTP_PASS,
-  },
-});
+dotenv.config();
+
+let transporterInstance: ReturnType<typeof nodemailer.createTransport> | null =
+  null;
+
+const getTransporter = () => {
+  if (transporterInstance) return transporterInstance;
+
+  const host = process.env.SMTP_HOST || 'smtp.gmail.com';
+  const port = Number(process.env.SMTP_PORT) || 465;
+  const user = process.env.SMTP_USER || process.env.EMAIL_USER;
+  const pass = process.env.SMTP_PASS || process.env.EMAIL_PASS;
+
+  transporterInstance = nodemailer.createTransport({
+    host,
+    port,
+    secure: port === 465,
+    auth: {
+      user,
+      pass,
+    },
+  });
+
+  return transporterInstance;
+};
 
 export const sendOtpEmail = async (toEmail: string, otpCode: string) => {
+  const transporter = getTransporter();
+  const fromEmail =
+    process.env.EMAIL_USER || process.env.SMTP_USER || 'noreply@tiryalumba.com';
+
   const mailOptions = {
-    from: `"Tirya Lumba" <${process.env.EMAIL_USER}>`,
+    from: `"Tirya Lumba" <${fromEmail}>`,
     to: toEmail,
     subject: 'Kode Verifikasi OTP - Tirya Lumba',
     html: `
