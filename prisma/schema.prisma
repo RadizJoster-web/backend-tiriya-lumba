@@ -121,14 +121,15 @@ model StudentProfile {
 }
 
 model InstructorProfile {
-  id         String     @id @default(uuid())
-  userId     String     @unique
-  user       User       @relation(fields: [userId], references: [id], onDelete: Cascade)
-  shortBio   String?    @db.Text
-  birthDate  DateTime   
-  license    String?    @db.Text
-  experience String?
-  locations  Location[] @relation("InstructorLocations")
+  id                String     @id @default(uuid())
+  userId            String     @unique
+  user              User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  shortBio          String?    @db.Text
+  birthDate         DateTime   
+  license           String?    @db.Text
+  experience        String?
+  locations         Location[] @relation("InstructorLocations")
+  lastRescheduledAt DateTime?
 }
 
 model Registration {
