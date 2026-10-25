@@ -14,17 +14,40 @@ export const registerInstructorController = async (
     // 2. Ambil User ID dari Token JWT
     const userId = (req as any).user.userId;
 
-    // 3. Cek apakah user sudah terdaftar sebagai instruktur
-    const existingInstructorProfile = await prisma.instructorProfile.findUnique(
-      {
-        where: { userId },
+    // 3. Cek status user dan riwayat pendaftaran instruktur
+    const existingUser = await prisma.user.findUnique({
+      where: { id: userId },
+      include: {
+        instructorProfile: true,
+        registrations: {
+          where: { type: 'NEW_INSTRUCTOR' },
+          orderBy: { id: 'desc' },
+          take: 1,
+        },
       },
-    );
+    });
 
-    if (existingInstructorProfile) {
+    if (!existingUser) {
+      return res.status(404).json({
+        success: false,
+        message: 'Pengguna tidak ditemukan.',
+      });
+    }
+
+    // Jika user sudah berstatus instruktur aktif
+    if (existingUser.role === 'INSTRUCTOR') {
       return res.status(400).json({
         success: false,
-        message: 'Anda sudah mendaftar sebagai instruktur.',
+        message: 'Anda sudah terdaftar sebagai instruktur aktif.',
+      });
+    }
+
+    // Jika pendaftaran instruktur masih PENDING
+    const latestInstructorReg = existingUser.registrations?.[0];
+    if (latestInstructorReg && latestInstructorReg.status === 'PENDING') {
+      return res.status(400).json({
+        success: false,
+        message: 'Pendaftaran instruktur Anda sedang diproses dan menunggu verifikasi admin.',
       });
     }
 
@@ -59,9 +82,10 @@ export const registerInstructorController = async (
         },
       });
 
-      // B. Buat InstructorProfile & Relasikan ke Lokasi-Lokasi Unik
-      const instructorProfile = await tx.instructorProfile.create({
-        data: {
+      // B. Upsert InstructorProfile & Relasikan ke Lokasi-Lokasi Unik
+      const instructorProfile = await tx.instructorProfile.upsert({
+        where: { userId },
+        create: {
           user: {
             connect: { id: userId },
           },
@@ -73,10 +97,26 @@ export const registerInstructorController = async (
             connect: uniqueLocationIds.map((id) => ({ id })),
           },
         },
+        update: {
+          shortBio: data.shortBio,
+          birthDate: new Date(data.birthDate),
+          license: data.license,
+          experience: data.experience,
+          locations: {
+            set: uniqueLocationIds.map((id) => ({ id })),
+          },
+        },
       });
 
       // C. Simpan Seluruh Deklarasi Ketersediaan Jadwal Mengajar Pelatih
-      // studentId diisi null karena baru berupa deklarasi ketersediaan
+      // Hapus deklarasi jadwal mengajar lama yang belum memiliki murid
+      await tx.schedule.deleteMany({
+        where: {
+          instructorId: userId,
+          studentId: null,
+        },
+      });
+
       await tx.schedule.createMany({
         data: data.schedules.map((schedule) => ({
           instructorId: userId,
@@ -87,15 +127,27 @@ export const registerInstructorController = async (
         })),
       });
 
-      // D. Buat Record Pendaftaran / Booking (Status: PENDING)
-      const registration = await tx.registration.create({
-        data: {
-          userId,
-          type: 'NEW_INSTRUCTOR',
-          status: 'PENDING',
-          cvUrl: data.cvUrl,
-        },
-      });
+      // D. Buat Record Pendaftaran baru atau perbarui pendaftaran lama yang berstatus REJECTED
+      let registration;
+      if (latestInstructorReg && latestInstructorReg.status === 'REJECTED') {
+        registration = await tx.registration.update({
+          where: { id: latestInstructorReg.id },
+          data: {
+            status: 'PENDING',
+            rejectionReason: null,
+            cvUrl: data.cvUrl,
+          },
+        });
+      } else {
+        registration = await tx.registration.create({
+          data: {
+            userId,
+            type: 'NEW_INSTRUCTOR',
+            status: 'PENDING',
+            cvUrl: data.cvUrl,
+          },
+        });
+      }
 
       return { user: updatedUser, instructorProfile, registration };
     });

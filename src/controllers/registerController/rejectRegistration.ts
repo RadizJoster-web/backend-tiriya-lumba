@@ -56,13 +56,22 @@ export const rejectRegistrationController = async (
       }
     }
 
-    const updated = await prisma.registration.update({
-      where: { id },
-      data: {
-        status: 'REJECTED',
-        rejectionReason,
-      },
-    });
+    // Update status pendaftaran menjadi REJECTED dan simpan alasan penolakan tanpa menghapus nilai pendaftaran
+    const [updated] = await prisma.$transaction([
+      prisma.registration.update({
+        where: { id },
+        data: {
+          status: 'REJECTED',
+          rejectionReason,
+        },
+      }),
+      prisma.user.update({
+        where: { id: registration.userId },
+        data: {
+          role: 'USER',
+        },
+      }),
+    ]);
 
     return res.status(200).json({
       success: true,
