@@ -33,6 +33,7 @@ export const login = async (
         isVerified: true,
         isActive: true,
         locationId: true,
+        profilePictureUrl: true,
       },
     });
 
@@ -83,6 +84,7 @@ export const login = async (
       email: user.email,
       fullName: user.fullName,
       role: user.role,
+      profilePictureUrl: user.profilePictureUrl ?? null,
       ...(user.role === 'POOL_MANAGER' ? { locationId: user.locationId } : {}),
     };
 

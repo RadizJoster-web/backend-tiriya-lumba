@@ -20,7 +20,9 @@ rootRouter.use('/packages', packageRoutes);
 rootRouter.use('/sessions', sessionRoutes);
 rootRouter.use('/pool-managers', poolManagerRoutes);
 rootRouter.use('/instructor', instructorRoutes);
+rootRouter.use('/instructors', instructorRoutes);
 rootRouter.use('/upload-file', uploadRoutes);
 rootRouter.use('/register', registerRoutes);
+rootRouter.use('/registrations', registerRoutes);
 
 export default rootRouter;

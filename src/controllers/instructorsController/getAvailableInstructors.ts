@@ -17,7 +17,7 @@ export const getAvailableInstructors = async (
       where: {
         role: 'INSTRUCTOR',
         isActive: true,
-        InstructorProfile: {
+        instructorProfile: {
           locations: {
             some: {
               id: locationId,
@@ -29,10 +29,11 @@ export const getAvailableInstructors = async (
         id: true,
         fullName: true,
         profilePictureUrl: true,
-        InstructorProfile: {
+        instructorProfile: {
           select: {
             experience: true,
             license: true,
+            shortBio: true,
           },
         },
         schedules: {
@@ -66,8 +67,9 @@ export const getAvailableInstructors = async (
         instructorId: instructor.id,
         fullName: instructor.fullName,
         profilePictureUrl: instructor.profilePictureUrl,
-        experience: instructor.InstructorProfile?.experience || null,
-        license: instructor.InstructorProfile?.license || null,
+        experience: instructor.instructorProfile?.experience || null,
+        license: instructor.instructorProfile?.license || null,
+        shortBio: instructor.instructorProfile?.shortBio || null,
         currentStudentCount: instructor.schedules.length,
         maxCapacity: packageType === 'PRIVAT' ? 1 : MAX_REGULAR_CAPACITY,
       }));

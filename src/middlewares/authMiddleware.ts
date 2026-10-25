@@ -5,7 +5,7 @@ import jwt from 'jsonwebtoken';
 interface JwtPayload {
   userId: string;
   email: string;
-  role: 'ADMIN' | 'POOL_MANAGER' | 'INSTRUCTOR' | 'STUDENT';
+  role: 'ADMIN' | 'POOL_MANAGER' | 'INSTRUCTOR' | 'STUDENT' | 'USER';
   locationId?: string | null;
 }
 
@@ -15,24 +15,58 @@ export const authMiddleware = async (
   next: NextFunction,
 ) => {
   try {
-    let token: string | undefined;
+    let headerToken: string | undefined;
+    let cookieToken: string | undefined;
 
+    // 1. Ekstrak token dari Authorization Header (Bearer) dan Cookie
+    if (
+      req.headers.authorization &&
+      req.headers.authorization.startsWith('Bearer ')
+    ) {
+      headerToken = req.headers.authorization.split(' ')[1];
+    }
     if (req.cookies && req.cookies.access_token) {
-      token = req.cookies.access_token;
+      cookieToken = req.cookies.access_token;
     }
 
-    if (!token) {
+    const candidates = [headerToken, cookieToken].filter(Boolean) as string[];
+
+    if (candidates.length === 0) {
       return res.status(401).json({
         success: false,
         message: 'Akses ditolak. Token autentikasi tidak ditemukan.',
       });
     }
 
-    // 2. Dekode & Verifikasi JWT
-    const decoded = jwt.verify(
-      token,
-      process.env.JWT_SECRET || 'default_secret',
-    ) as JwtPayload;
+    // 2. Dekode & Verifikasi JWT (coba kandidat token)
+    let decoded: JwtPayload | null = null;
+    let lastError: any = null;
+
+    for (const cand of candidates) {
+      try {
+        decoded = jwt.verify(
+          cand,
+          process.env.JWT_SECRET || 'default_secret',
+        ) as JwtPayload;
+        if (decoded) break;
+      } catch (err) {
+        lastError = err;
+      }
+    }
+
+    if (!decoded) {
+      if (lastError?.name === 'TokenExpiredError') {
+        return res.status(401).json({
+          success: false,
+          message:
+            'Sesi Anda telah berakhir (Token Expired). Silakan login kembali.',
+        });
+      }
+      return res.status(401).json({
+        success: false,
+        message: 'Token autentikasi tidak valid.',
+      });
+    }
 
     // 3. Query efisien ke DB dengan Select
     const user = await prisma.user.findFirst({
@@ -79,23 +113,14 @@ export const authMiddleware = async (
   }
 };
 
-export const authorize = (...allowedRoles: string[]) => {
+export const authorize = (...roles: string[]) => {
   return (req: Request, res: Response, next: NextFunction) => {
-    if (!req.user) {
-      return res.status(401).json({
-        success: false,
-        message: 'Autentikasi diperlukan.',
-      });
-    }
-
-    if (!allowedRoles.includes(req.user.role)) {
+    if (!req.user || !roles.includes(req.user.role)) {
       return res.status(403).json({
         success: false,
-        message:
-          'Hak akses ditolak. Anda tidak memiliki izin untuk tindakan ini.',
+        message: 'Akses terlarang. Anda tidak memiliki izin untuk tindakan ini.',
       });
     }
-
     next();
   };
 };

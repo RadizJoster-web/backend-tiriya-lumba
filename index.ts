@@ -26,13 +26,32 @@ app.use(
 app.use('/public', express.static('public'));
 app.use('/uploads', express.static(path.join(__dirname, '../uploads')));
 
-// CORS configuration
+// CORS configuration (Mendukung localhost, 127.0.0.1, dan domain dari .env)
 app.use(
   cors({
-    origin: [
-      process.env.URL_LANDING_PAGE || 'http://localhost:3000',
-      process.env.URL_DASHBOARD_PAGE || 'http://localhost:5173',
-    ],
+    origin: (origin, callback) => {
+      if (!origin) return callback(null, true);
+
+      const urlLanding = process.env.URL_LANDING_PAGE;
+      const urlDashboard = process.env.URL_DASHBOARD_PAGE;
+      if (urlLanding && origin === urlLanding) return callback(null, true);
+      if (urlDashboard && origin === urlDashboard) return callback(null, true);
+
+      try {
+        const parsed = new URL(origin);
+        if (
+          parsed.hostname === 'localhost' ||
+          parsed.hostname === '127.0.0.1' ||
+          parsed.hostname.startsWith('192.168.')
+        ) {
+          return callback(null, true);
+        }
+      } catch {
+        // Abaikan parse error
+      }
+
+      return callback(null, true);
+    },
     methods: ['GET', 'POST', 'PUT', 'DELETE'],
     allowedHeaders: ['Content-Type', 'Authorization'],
     credentials: true,

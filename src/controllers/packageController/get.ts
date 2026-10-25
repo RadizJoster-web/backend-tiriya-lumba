@@ -12,16 +12,16 @@ export const getPackages = async (
         id: true,
         price: true,
         type: true,
+        locationId: true,
         location: {
-          // huruf kecil 'location'
           select: {
             id: true,
             name: true,
             category: true,
             mapUrl: true,
             area: {
-              // Area diambil dari dalam relasi location
               select: {
+                id: true,
                 name: true,
               },
             },

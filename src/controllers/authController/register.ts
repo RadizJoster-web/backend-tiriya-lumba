@@ -44,7 +44,7 @@ export const register = async (
         email,
         password: hashedPassword,
         fullName: fullName,
-        role: 'STUDENT',
+        role: 'USER',
         otpCode,
         otpExpiresAt,
         isVerified: false,

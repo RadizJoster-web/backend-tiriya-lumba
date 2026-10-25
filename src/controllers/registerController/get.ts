@@ -8,7 +8,15 @@ export const getRegistrationsController = async (
 ) => {
   try {
     const currentUser = (req as any).user;
-    const whereCondition: any = { status: 'PENDING' };
+    const { status, type } = req.query;
+
+    const whereCondition: any = {
+      status: (status as string) || 'PENDING',
+    };
+
+    if (type) {
+      whereCondition.type = type as string;
+    }
 
     if (currentUser.role === 'POOL_MANAGER') {
       if (!currentUser.locationId) {
@@ -20,18 +28,15 @@ export const getRegistrationsController = async (
       whereCondition.locationId = currentUser.locationId;
     }
 
-    // Ambil data dasar saja
     const registrations = await prisma.registration.findMany({
       where: whereCondition,
       orderBy: { id: 'desc' },
-      select: {
-        id: true,
-        type: true,
-        status: true,
+      include: {
         user: {
           select: {
             fullName: true,
             email: true,
+            phone: true,
             profilePictureUrl: true,
             studentProfile: {
               select: {
@@ -39,18 +44,40 @@ export const getRegistrationsController = async (
                 birthDate: true,
               },
             },
+            instructorProfile: {
+              select: {
+                birthDate: true,
+                locations: {
+                  select: { id: true, name: true },
+                },
+              },
+            },
           },
         },
       },
     });
 
-    // Format data & hitung umur
+    // Ambil master lokasi untuk mapping locationId student
+    const locations = await prisma.location.findMany({
+      select: { id: true, name: true },
+    });
+    const locationMap = new Map(locations.map((l) => [l.id, l.name]));
+
     const listData = registrations.map((reg) => {
       const user = reg.user;
       const studentProfile = user?.studentProfile;
+      const instructorProfile = user?.instructorProfile;
 
-      // Hierarki Nama: StudentProfile.fullName -> User.fullName -> User.email
       const name = studentProfile?.fullName || user?.fullName || 'Unknown';
+      const instructorBirthDate = instructorProfile?.birthDate;
+
+      let locationLabel = '-';
+      if (reg.type === 'NEW_STUDENT' && reg.locationId) {
+        locationLabel = locationMap.get(reg.locationId) ?? '-';
+      } else if (reg.type === 'NEW_INSTRUCTOR') {
+        const poolNames = instructorProfile?.locations?.map((l) => l.name) ?? [];
+        locationLabel = poolNames.length > 0 ? poolNames.join(', ') : 'Semua Kolam';
+      }
 
       return {
         id: reg.id,
@@ -58,8 +85,13 @@ export const getRegistrationsController = async (
         status: reg.status,
         name,
         email: user?.email ?? null,
-        birthDate: studentProfile?.birthDate ?? null,
+        phone: user?.phone ?? null,
+        lokasi: locationLabel,
+        birthDate: studentProfile?.birthDate ?? instructorBirthDate ?? null,
         profilePictureUrl: user?.profilePictureUrl ?? null,
+        cvUrl: reg.cvUrl ?? null,
+        paymentProofUrl: reg.paymentProofUrl ?? null,
+        rejectionReason: reg.rejectionReason ?? null,
       };
     });
 

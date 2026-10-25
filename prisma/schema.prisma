@@ -16,6 +16,7 @@ enum Role {
   POOL_MANAGER
   INSTRUCTOR
   STUDENT
+  USER
 }
 
 enum PaymentMethod {
@@ -46,7 +47,7 @@ model User {
   phone             String?
   email             String             @unique
   password          String
-  role              Role
+  role              Role               @default(USER)
   otpCode           String?
   otpExpiresAt      DateTime?
   isVerified        Boolean            @default(false)
@@ -56,7 +57,7 @@ model User {
   isActive          Boolean            @default(true)
   studentProfile    StudentProfile?
   schedules         Schedule[]         @relation("InstructorSchedules")
-  InstructorProfile InstructorProfile?
+  instructorProfile InstructorProfile?
   registrations     Registration[]
 }
 
@@ -122,8 +123,8 @@ model InstructorProfile {
   userId     String     @unique
   user       User       @relation(fields: [userId], references: [id], onDelete: Cascade)
   shortBio   String?    @db.Text
-  birthDate  DateTime
-  license    String?
+  birthDate  DateTime   
+  license    String?    @db.Text
   experience String?
   locations  Location[] @relation("InstructorLocations")
 }

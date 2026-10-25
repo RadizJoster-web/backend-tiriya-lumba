@@ -1785,6 +1785,106 @@ Modul ini menangani submit formulir pendaftaran siswa baru (booking kelas) serta
 
 ---
 
+
+### 10.3 Ambil Daftar Pendaftaran Antrean
+
+- **Endpoint:** `GET /api/register` atau `GET /api/registrations`
+- **Authentikasi:** Membutuhkan Token
+- **Otorisasi Role:** `ADMIN`, `POOL_MANAGER`
+- **Query Params:** `?status=PENDING&type=NEW_STUDENT` *(opsional)*
+
+**Contoh Response Sukses (200 OK):**
+
+```json
+{
+  "success": true,
+  "totalItems": 1,
+  "data": [
+    {
+      "id": "1b9a1b96-8a9d-4863-bb43-2d7a7011be81",
+      "type": "NEW_INSTRUCTOR",
+      "status": "PENDING",
+      "name": "Coach Bambang",
+      "email": "coach@example.com",
+      "phone": "081234567890",
+      "lokasi": "Permata, Graha Raya",
+      "birthDate": "1995-05-12T00:00:00.000Z",
+      "profilePictureUrl": "public/uploads/profiles/coach.png",
+      "cvUrl": "public/uploads/cvs/cv.pdf",
+      "paymentProofUrl": null,
+      "rejectionReason": null
+    }
+  ]
+}
+```
+
+---
+
+### 10.4 Ambil Detail Pendaftaran Berdasarkan ID
+
+- **Endpoint:** `GET /api/register/:id` atau `GET /api/registrations/:id`
+- **Authentikasi:** Membutuhkan Token
+- **Otorisasi Role:** `ADMIN`, `POOL_MANAGER`
+
+---
+
+### 10.5 Status Pendaftaran User Login
+
+- **Endpoint:** `GET /api/register/me` atau `GET /api/registrations/me`
+- **Authentikasi:** Membutuhkan Token
+- **Otorisasi Role:** `STUDENT`, `INSTRUCTOR`, `ADMIN`, `POOL_MANAGER`
+
+---
+
+### 10.6 Menyetujui Pendaftaran (Approve)
+
+- **Endpoint:** `POST /api/register/:id/approve` atau `POST /api/registrations/:id/approve`
+- **Authentikasi:** Membutuhkan Token
+- **Otorisasi Role:** `ADMIN`, `POOL_MANAGER` (khusus murid di kolamnya)
+
+**Contoh Response Sukses (200 OK):**
+
+```json
+{
+  "success": true,
+  "message": "Pendaftaran pelatih berhasil disetujui.",
+  "data": {
+    "registrationId": "1b9a1b96-8a9d-4863-bb43-2d7a7011be81",
+    "status": "APPROVED"
+  }
+}
+```
+
+---
+
+### 10.7 Menolak Pendaftaran (Reject)
+
+- **Endpoint:** `POST /api/register/:id/reject` atau `POST /api/registrations/:id/reject`
+- **Authentikasi:** Membutuhkan Token
+- **Otorisasi Role:** `ADMIN`, `POOL_MANAGER` (khusus murid di kolamnya)
+
+**Request Body JSON:**
+
+```json
+{
+  "rejectionReason": "Berkas sertifikasi lisensi tidak valid atau belum terlampir."
+}
+```
+
+**Contoh Response Sukses (200 OK):**
+
+```json
+{
+  "success": true,
+  "message": "Pendaftaran berhasil ditolak.",
+  "data": {
+    "registrationId": "1b9a1b96-8a9d-4863-bb43-2d7a7011be81",
+    "status": "REJECTED",
+    "rejectionReason": "Berkas sertifikasi lisensi tidak valid atau belum terlampir."
+  }
+}
+```
+
 ## 11. Matriks Otorisasi Endpoint (Cheat Sheet)
 
 | Endpoint                           | Method   | Autentikasi       | Role Diizinkan          | Deskripsi Singkat                         |
@@ -1824,5 +1924,10 @@ Modul ini menangani submit formulir pendaftaran siswa baru (booking kelas) serta
 | `/api/upload-file/student/profil`  | `POST`   | Tidak Butuh       | `PUBLIC`                | Upload gambar foto profil siswa           |
 | `/api/upload-file/student/payment` | `POST`   | Tidak Butuh       | `PUBLIC`                | Upload gambar bukti transfer/bayar        |
 | `/api/upload-file/instructor`      | `POST`   | Tidak Butuh       | `PUBLIC`                | Upload PDF CV dan foto instruktur         |
+| `/api/register/me`                | `GET`    | Membutuhkan Token | `PUBLIC (Auth)`        | Ambil snapshot pendaftaran user aktif     |
+| `/api/register`                   | `GET`    | Membutuhkan Token | `ADMIN`, `POOL_MANAGER` | Daftar antrean pendaftaran murid & pelatih |
+| `/api/register/:id`               | `GET`    | Membutuhkan Token | `ADMIN`, `POOL_MANAGER` | Detail lengkap pengajuan pendaftaran      |
+| `/api/register/:id/approve`       | `POST`   | Membutuhkan Token | `ADMIN`, `POOL_MANAGER` | Approve pengajuan murid / pelatih         |
+| `/api/register/:id/reject`        | `POST`   | Membutuhkan Token | `ADMIN`, `POOL_MANAGER` | Tolak pengajuan murid / pelatih + alasan  |
 | `/api/register/student`            | `POST`   | Membutuhkan Token | `STUDENT`               | Submit formulir booking pendaftaran murid |
 | `/api/register/instructor`         | `POST`   | Membutuhkan Token | `INSTRUCTOR`            | Submit formulir & jadwal pelatih baru     |

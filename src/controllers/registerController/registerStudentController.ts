@@ -1,5 +1,4 @@
 import { Request, Response, NextFunction } from 'express';
-import bcrypt from 'bcrypt';
 import { prisma } from '../../config/prisma';
 import { registerStudentSchema } from './registerSchema';
 
@@ -11,11 +10,12 @@ export const registerStudentController = async (
   try {
     // 1. Validasi JSON dari frontend
     const data = registerStudentSchema.parse(req.body);
+    const userId = (req as any).user.userId;
     const userEmail = (req as any).user.email;
 
     // 2. Cek duplikasi email (Jika sudah terdaftar sebagai murid aktif, tolak)
     const existingUser = await prisma.user.findUnique({
-      where: { email: userEmail },
+      where: { id: userId },
       include: { studentProfile: true },
     });
 
@@ -50,16 +50,20 @@ export const registerStudentController = async (
 
     // 4. Jalankan Transaksi Database (Atomic)
     const result = await prisma.$transaction(async (tx) => {
-      const user = existingUser;
-
-      if (!user) {
-        throw new Error('User tidak ditemukan untuk pendaftaran murid.');
-      }
+      // Update User profile picture, phone, dan name
+      const updatedUser = await tx.user.update({
+        where: { id: userId },
+        data: {
+          fullName: data.fullName,
+          phone: data.phone,
+          profilePictureUrl: data.profilePictureUrl || undefined,
+        },
+      });
 
       // Buat StudentProfile (Data akademik/kesiswaan)
       const studentProfile = await tx.studentProfile.create({
         data: {
-          userId: user.id,
+          userId,
           fullName: data.fullName,
           birthPlace: data.birthPlace,
           birthDate: new Date(data.birthDate),
@@ -74,7 +78,7 @@ export const registerStudentController = async (
       // Buat Record Pendaftaran / Booking
       const registration = await tx.registration.create({
         data: {
-          userId: user.id,
+          userId,
           type: 'NEW_STUDENT',
           status: 'PENDING',
           packageId: data.packageId,
@@ -84,11 +88,10 @@ export const registerStudentController = async (
           firstMeetSession: data.firstMeetSession,
           paymentMethod: data.paymentMethod,
           paymentProofUrl: data.paymentProofUrl,
-          photoUrl: data.profilePictureUrl || null,
         },
       });
 
-      return { user, studentProfile, registration };
+      return { user: updatedUser, studentProfile, registration };
     });
 
     // 5. Kembalikan Response

@@ -45,7 +45,8 @@ export const getInstructorByIdForManagement = async (
               select: {
                 id: true,
                 name: true,
-                address: true,
+                category: true,
+                mapUrl: true,
                 area: {
                   select: { id: true, name: true },
                 },

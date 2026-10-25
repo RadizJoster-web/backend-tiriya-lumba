@@ -49,13 +49,12 @@ export const registerInstructorController = async (
 
     // 6. Jalankan Database Transaction (Atomic)
     const result = await prisma.$transaction(async (tx) => {
-      // A. Update User Data (Nama, No HP, Role, Foto Profil)
+      // A. Update User Data (Nama, No HP, Foto Profil)
       const updatedUser = await tx.user.update({
         where: { id: userId },
         data: {
           fullName: data.fullName,
           phone: data.phone,
-          role: 'INSTRUCTOR',
           profilePictureUrl: data.profilePictureUrl || null,
         },
       });
@@ -63,8 +62,11 @@ export const registerInstructorController = async (
       // B. Buat InstructorProfile & Relasikan ke Lokasi-Lokasi Unik
       const instructorProfile = await tx.instructorProfile.create({
         data: {
-          userId,
+          user: {
+            connect: { id: userId },
+          },
           shortBio: data.shortBio,
+          birthDate: new Date(data.birthDate),
           license: data.license,
           experience: data.experience,
           locations: {

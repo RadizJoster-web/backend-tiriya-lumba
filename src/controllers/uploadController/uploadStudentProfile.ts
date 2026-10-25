@@ -10,14 +10,15 @@ export const uploadStudentProfile = async (
       | { [fieldname: string]: Express.Multer.File[] }
       | undefined;
 
-    const profilePictureFile = files?.profilePictures?.[0];
+    const profilePictureFile =
+      files?.profilePicture?.[0] || files?.profilePictures?.[0];
     const profilePictureUrl = profilePictureFile
       ? profilePictureFile.path
       : null;
 
     return res.status(200).json({
       success: true,
-      message: 'upload profile berhasil.',
+      message: 'Upload profile berhasil.',
       data: { profilePictureUrl },
     });
   } catch (err) {

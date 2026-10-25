@@ -23,4 +23,12 @@ router.get(
   getInstructorByIdForManagement,
 );
 
+// Alias direct ID
+router.get(
+  '/:id',
+  authMiddleware,
+  authorize('ADMIN', 'POOL_MANAGER'),
+  getInstructorByIdForManagement,
+);
+
 export default router;
