@@ -151,6 +151,8 @@ model Registration {
   paymentMethod   PaymentMethod?
   paymentProofUrl String?
   cvUrl           String?
+  createdAt       DateTime           @default(now())
+  updatedAt       DateTime           @default(now()) @updatedAt
 }
 
 model Schedule {
@@ -165,9 +167,13 @@ model Schedule {
 }
 
 model Attendance {
-  id               String         @id @default(uuid())
-  studentProfileId String
-  date             DateTime       @default(now())
-  status           String // "Hadir" / "Tidak Hadir"
-  studentProfile   StudentProfile @relation(fields: [studentProfileId], references: [id])
+  id               String          @id @default(uuid())
+  studentProfileId String?
+  instructorId     String?
+  role             String          @default("Murid") // "Murid" / "Pelatih"
+  name             String
+  locationName     String
+  date             DateTime        @default(now())
+  status           String          // "Hadir" / "Tidak Hadir"
+  studentProfile   StudentProfile? @relation(fields: [studentProfileId], references: [id])
 }

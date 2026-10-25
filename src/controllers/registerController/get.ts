@@ -10,9 +10,13 @@ export const getRegistrationsController = async (
     const currentUser = (req as any).user;
     const { status, type } = req.query;
 
-    const whereCondition: any = {
-      status: (status as string) || 'PENDING',
-    };
+    const whereCondition: any = {};
+
+    if (status && status !== 'ALL') {
+      whereCondition.status = status as string;
+    } else if (!status) {
+      whereCondition.status = 'PENDING';
+    }
 
     if (type) {
       whereCondition.type = type as string;
@@ -30,7 +34,7 @@ export const getRegistrationsController = async (
 
     const registrations = await prisma.registration.findMany({
       where: whereCondition,
-      orderBy: { id: 'desc' },
+      orderBy: { createdAt: 'desc' },
       include: {
         user: {
           select: {
@@ -92,6 +96,7 @@ export const getRegistrationsController = async (
         cvUrl: reg.cvUrl ?? null,
         paymentProofUrl: reg.paymentProofUrl ?? null,
         rejectionReason: reg.rejectionReason ?? null,
+        createdAt: reg.createdAt ? reg.createdAt.toISOString() : new Date().toISOString(),
       };
     });
 
