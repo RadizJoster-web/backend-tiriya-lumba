@@ -29,11 +29,20 @@ export const getInstructorsForManagement = async (
         });
       }
 
-      whereCondition.instructorProfile = {
-        locations: {
-          some: { id: currentUser.locationId },
+      whereCondition.OR = [
+        {
+          instructorProfile: {
+            locations: {
+              some: { id: currentUser.locationId },
+            },
+          },
         },
-      };
+        {
+          schedules: {
+            some: { locationId: currentUser.locationId },
+          },
+        },
+      ];
     }
 
     const [totalItems, instructors] = await Promise.all([
