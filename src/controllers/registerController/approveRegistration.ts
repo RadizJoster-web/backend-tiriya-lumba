@@ -83,7 +83,18 @@ export const approveRegistrationController = async (
           },
         });
 
-        // Set default 4 sesi aktif untuk pertemuan pertama
+        // Ambil sessionCount dari paket yang didaftarkan (default 4, maks 10)
+        let activeSessions = 4;
+        if (registration.packageId) {
+          const pkg = await tx.package.findUnique({
+            where: { id: registration.packageId },
+            select: { sessionCount: true },
+          });
+          if (pkg?.sessionCount && pkg.sessionCount > 0) {
+            activeSessions = Math.min(pkg.sessionCount, 10);
+          }
+        }
+
         const studentProfile = await tx.studentProfile.findUnique({
           where: { userId: registration.userId },
         });
@@ -91,7 +102,7 @@ export const approveRegistrationController = async (
         if (studentProfile) {
           await tx.studentProfile.update({
             where: { userId: registration.userId },
-            data: { activeSessions: 4 },
+            data: { activeSessions },
           });
         }
       }

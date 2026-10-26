@@ -244,7 +244,17 @@ export const getMyRegistrationController = async (
       registration.instructorId
         ? prisma.user.findUnique({
             where: { id: registration.instructorId },
-            select: { fullName: true },
+            select: {
+              fullName: true,
+              profilePictureUrl: true,
+              instructorProfile: {
+                select: {
+                  license: true,
+                  experience: true,
+                  shortBio: true,
+                },
+              },
+            },
           })
         : null,
     ]);
@@ -281,6 +291,10 @@ export const getMyRegistrationController = async (
       packageType: packageData?.type ?? '',
       packagePrice: packageData?.price ?? 0,
       instructorName: instructor?.fullName ?? '',
+      instructorProfilePictureUrl: instructor?.profilePictureUrl ?? '',
+      instructorLicense: instructor?.instructorProfile?.license ?? '',
+      instructorExperience: instructor?.instructorProfile?.experience ?? '',
+      instructorBio: instructor?.instructorProfile?.shortBio ?? '',
     };
 
     return res.status(200).json({

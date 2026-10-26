@@ -13,6 +13,8 @@ import uploadRoutes from './uploadRoutes';
 import registerRoutes from './registerRoutes';
 import studentRoutes from './studentRoutes';
 import attendanceRoutes from './attendanceRoutes';
+import dashboardRoutes from './dashboardRoutes';
+import statsRoutes from './statsRoutes';
 
 // Routes
 rootRouter.use('/auth', authRoutes);
@@ -30,5 +32,8 @@ rootRouter.use('/siswa', studentRoutes);
 rootRouter.use('/students', studentRoutes);
 rootRouter.use('/absensi', attendanceRoutes);
 rootRouter.use('/attendances', attendanceRoutes);
+rootRouter.use('/dashboard', dashboardRoutes);
+rootRouter.use('/stats', statsRoutes);
+rootRouter.use('/public/stats', statsRoutes);
 
 export default rootRouter;

@@ -1931,3 +1931,11 @@ Modul ini menangani submit formulir pendaftaran siswa baru (booking kelas) serta
 | `/api/register/:id/reject`        | `POST`   | Membutuhkan Token | `ADMIN`, `POOL_MANAGER` | Tolak pengajuan murid / pelatih + alasan  |
 | `/api/register/student`            | `POST`   | Membutuhkan Token | `STUDENT`               | Submit formulir booking pendaftaran murid |
 | `/api/register/instructor`         | `POST`   | Membutuhkan Token | `INSTRUCTOR`            | Submit formulir & jadwal pelatih baru     |
+| `/api/attendances/my-history`      | `GET`    | Membutuhkan Token | `STUDENT`, `USER`       | Riwayat presensi pertemuan murid          |
+| `/api/attendances/today`           | `GET`    | Membutuhkan Token | `ADMIN`, `POOL_MANAGER` | Daftar murid & pelatih latihan hari ini   |
+| `/api/attendances`                 | `GET`    | Membutuhkan Token | `ADMIN`, `POOL_MANAGER` | Riwayat log seluruh absensi di sistem     |
+| `/api/attendances`                 | `POST`   | Membutuhkan Token | `ADMIN`, `POOL_MANAGER` | Simpan catatan presensi kehadiran harian  |
+| `/api/dashboard/summary`           | `GET`    | Membutuhkan Token | `ADMIN`, `POOL_MANAGER` | Agregasi statistik dasbor & tren bulanan  |
+| `/api/stats`                       | `GET`    | Tidak Butuh       | `PUBLIC`                | Statistik publik total murid & pelatih    |
+| `/api/instructors/reschedule/status` | `GET`  | Membutuhkan Token | `INSTRUCTOR`            | Status token atur ulang jadwal pelatih    |
+| `/api/instructors/reschedule`      | `PUT`    | Membutuhkan Token | `INSTRUCTOR`            | Eksekusi pembaruan ketersediaan jadwal    |

@@ -108,16 +108,14 @@ Hari 17: Logika Anti-Bentrok Jadwal (Clash Validation) - Bagian 1
 - Tambahkan validasi: Sebelum murid berhasil *booking*, cek apakah `instructorId` di hari (`dayOfWeek`) dan sesi (`sessionName`) yang dipilih sudah terisi `studentId` lain di tabel `Schedule`. Tolak jika sudah penuh.
 
 Hari 18: Renewal (Perpanjangan Paket)
-- Buat `POST /api/bookings/renewal` untuk murid (via portal Next.js) memperpanjang paket mandiri saat `activeSessions` habis.
-- Buat `POST /api/admin/students/:id/renew` untuk Quick Renew offline oleh Pengelola Kolam di dasbor Vite.
+- Fitur renewal disederhanakan melalui alur online di portal Landing Page: murid yang kehabisan sesi (activeSessions = 0) dapat mendaftar ulang langsung di website dengan data profil yang terisi otomatis. (Quick renew offline oleh pengelola di dasbor ditiadakan).
 
 Hari 19: API Manajemen Siswa Dasbor
 - Buat `GET /api/admin/students`. Terapkan filter lokasi untuk Pengelola Kolam.
 - Sertakan relasi `activeSessions` dan data paket yang diambil.
 
 Hari 20: API Soft Delete Manual
-- Buat `PATCH /api/admin/students/:id/toggle-status`.
-- Ini digunakan jika murid tiba-tiba berhenti di tengah jalan dan admin ingin menonaktifkannya secara manual (ubah `isActive = false`).
+- [Catatan Revisi]: Fitur toggle-status manual saat ini ditangguhkan / belum dibutuhkan dalam alur operasional.
 
 --------------------------------------------------------------------------------
 MINGGU 5: MODUL ABSENSI, RESCHEDULE, & TRANSAKSI OTOMATIS
@@ -126,26 +124,27 @@ Fokus: Logika bisnis kompleks menggunakan Prisma Transaction.
 Hari 21: Setup API Pencatatan Absensi (Hadir/Tidak Hadir)
 - Buat `POST /api/admin/attendances`.
 - Pastikan hanya bisa diakses oleh POOL_MANAGER (atau ADMIN).
+- Buat `GET /api/attendances/my-history` untuk murid melihat riwayat presensi sendiri.
 
-Hari 22: Prisma Transaction untuk Sesi Otomatis & Soft Delete
+Hari 22: Prisma Transaction untuk Sesi Otomatis & Presensi
 - Lanjutkan API Absensi.
 - Implementasikan `prisma.$transaction`.
 - Langkah 1: Catat kehadiran.
 - Langkah 2: Lakukan `decrement` pada `activeSessions` di profil murid.
-- Langkah 3: Jika `activeSessions` menjadi 0, update tabel User murid tersebut `isActive = false` secara otomatis dalam transaksi yang sama.
+- [Catatan Arsitektur]: Jika `activeSessions` menjadi 0, user TETAP aktif (`isActive = true`) agar murid dapat login ke profil dan melakukan pendaftaran ulang / perpanjangan paket mandiri.
 
-Hari 23: Pengajuan Reschedule (Portal Pelatih)
-- Buat `POST /api/portal/reschedules`.
-- KRUSIAL: Tambahkan validasi database. Jika pelatih mencoba *reschedule* di hari/sesi di mana `studentId !== null` (dia ada jadwal mengajar murid), kembalikan error `400 Bad Request` sesuai spesifikasi dokumen.
+Hari 23: Pengelolaan Reschedule Mandiri (Portal Pelatih)
+- Implementasi `GET /api/instructors/reschedule/status` dan `PUT /api/instructors/reschedule`.
+- Guru dapat mengatur ulang ketersediaan jadwal mereka secara mandiri dengan batasan kuota 1 kali per 30 hari (token bulanan).
+- Validasi ketat: Pelatih TIDAK dapat menghapus sesi yang sedang aktif dijadwalkan mengajar murid.
 
-Hari 24: Eksekusi Reschedule (Dasbor Admin)
-- Buat API untuk Admin Pusat menyetujui pengajuan *reschedule* pelatih.
-- Jika disetujui, update record di tabel `Schedule`.
+Hari 24: Sederhanakan Manajemen Jadwal
+- [Catatan Revisi]: Alur persetujuan manual reschedule admin disederhanakan menjadi pengelolaan mandiri pelatih berbasis kuota bulanan sehingga lebih efisien dikelola.
 
 Hari 25: API Statistik Dasbor Utama
-- Buat `GET /api/dashboard/summary?month=X&year=Y`.
-- Hitung total pendapatan bulanan, jumlah siswa aktif, dan metrik lainnya.
-- Hati-hati Memory Leak: Gunakan fitur agregasi Prisma (`prisma.registration.aggregate`, `prisma.studentProfile.count`), JANGAN menarik seluruh data (`findMany`) ke array Node.js lalu di-loop manual.
+- Implementasi `GET /api/dashboard/summary?year=X&month=Y`.
+- Menyajikan agregasi efisien (total siswa aktif, total pelatih, total pendaftar, dan distribusi chart bulanan/mingguan) dengan dukungan filter role (scoping lokasi untuk Pool Manager).
+- Implementasi endpoint publik `GET /api/stats` untuk statistik total murid, guru, kolam, dan wilayah pada halaman beranda landing page.
 
 --------------------------------------------------------------------------------
 MINGGU 6: PENGUJIAN, OPTIMASI, & DEPLOYMENT

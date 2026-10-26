@@ -4,9 +4,13 @@ import {
   getAttendanceTodayController,
   submitAttendanceController,
   getAttendanceHistoryController,
+  getMyAttendanceHistoryController,
 } from '../controllers/attendanceController';
 
 const router = Router();
+
+// Endpoint untuk mengambil riwayat absensi khusus untuk murid yang login
+router.get('/my-history', authMiddleware, getMyAttendanceHistoryController);
 
 // Endpoint untuk mengambil orang yang jadwalnya hari ini
 router.get(

@@ -173,20 +173,14 @@ export const submitAttendanceController = async (
 
             // Jika hadir, lakukan decrement activeSessions (Sesuai Steps.txt Hari 22)
             if (status === 'Hadir' && profile.activeSessions > 0) {
-              const updatedProfile = await tx.studentProfile.update({
+              await tx.studentProfile.update({
                 where: { id: profile.id },
                 data: {
                   activeSessions: { decrement: 1 },
                 },
               });
-
-              // Jika activeSessions menjadi 0, nonaktifkan user murid
-              if (updatedProfile.activeSessions <= 0) {
-                await tx.user.update({
-                  where: { id: profile.userId },
-                  data: { isActive: false },
-                });
-              }
+              // Catatan Arsitektur: Jangan ubah user.isActive = false ketika activeSessions habis,
+              // agar murid tetap dapat login ke portal /profile dan melakukan Perpanjangan Paket (Daftar Ulang).
             }
           }
         }
@@ -241,6 +235,54 @@ export const getAttendanceHistoryController = async (
       success: true,
       totalItems: result.length,
       data: result,
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+/**
+ * Mengambil riwayat absensi khusus untuk murid yang sedang login
+ */
+export const getMyAttendanceHistoryController = async (
+  req: Request,
+  res: Response,
+  next: NextFunction,
+) => {
+  try {
+    const userId = (req as any).user.userId;
+
+    const studentProfile = await prisma.studentProfile.findUnique({
+      where: { userId },
+    });
+
+    if (!studentProfile) {
+      return res.status(200).json({
+        success: true,
+        data: [],
+      });
+    }
+
+    const attendances = await prisma.attendance.findMany({
+      where: {
+        OR: [
+          { studentProfileId: studentProfile.id },
+          { name: studentProfile.fullName, role: 'Murid' },
+        ],
+      },
+      orderBy: { date: 'desc' },
+    });
+
+    const data = attendances.map((a) => ({
+      id: a.id,
+      date: a.date.toISOString(),
+      locationName: a.locationName,
+      status: a.status,
+    }));
+
+    return res.status(200).json({
+      success: true,
+      data,
     });
   } catch (error) {
     next(error);

@@ -75,7 +75,60 @@ export const registerStudentController = async (
         .status(404)
         .json({ success: false, message: 'Instruktur tidak ditemukan' });
 
-    // 4. Jalankan Transaksi Database (Atomic)
+    // 4. Validasi Anti-Bentrok & Kapasitas Mengajar (Capacity & Clash Guard)
+    const DAYS_ID = ['Minggu', 'Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu'];
+    const meetDate = new Date(data.firstMeetDate);
+    const dayOfWeek = DAYS_ID[meetDate.getDay()];
+
+    const declaredSchedule = await prisma.schedule.findFirst({
+      where: {
+        instructorId: data.instructorId,
+        locationId: data.locationId,
+        dayOfWeek,
+        sessionName: data.firstMeetSession,
+      },
+    });
+
+    if (!declaredSchedule) {
+      return res.status(400).json({
+        success: false,
+        message: `Pelatih ${instructor.fullName} tidak memiliki jadwal mengajar pada hari ${dayOfWeek} (${data.firstMeetSession}) di lokasi yang dipilih.`,
+      });
+    }
+
+    const MAX_REGULAR_CAPACITY = 5;
+    const isPrivate = packageData.type.trim().toUpperCase().includes('PRIVAT');
+    const maxCapacity = isPrivate ? 1 : MAX_REGULAR_CAPACITY;
+
+    const existingBookings = await prisma.registration.findMany({
+      where: {
+        instructorId: data.instructorId,
+        locationId: data.locationId,
+        firstMeetSession: data.firstMeetSession,
+        status: { in: ['PENDING', 'APPROVED'] },
+        type: 'NEW_STUDENT',
+        userId: { not: userId },
+      },
+      select: {
+        id: true,
+        firstMeetDate: true,
+      },
+    });
+
+    const sameDayBookings = existingBookings.filter((b) => {
+      if (!b.firstMeetDate) return false;
+      const bDate = new Date(b.firstMeetDate);
+      return DAYS_ID[bDate.getDay()] === dayOfWeek;
+    });
+
+    if (sameDayBookings.length >= maxCapacity) {
+      return res.status(400).json({
+        success: false,
+        message: `Kapasitas pelatih ${instructor.fullName} pada hari ${dayOfWeek} (${data.firstMeetSession}) sudah penuh (${sameDayBookings.length}/${maxCapacity} murid). Silakan pilih sesi atau pelatih lain.`,
+      });
+    }
+
+    // 5. Jalankan Transaksi Database (Atomic)
     const result = await prisma.$transaction(async (tx) => {
       // Update data user (nama, no HP, foto profil)
       const updatedUser = await tx.user.update({

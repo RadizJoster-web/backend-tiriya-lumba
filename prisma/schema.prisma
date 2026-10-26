@@ -89,11 +89,12 @@ model Location {
 }
 
 model Package {
-  id         String   @id @default(uuid())
-  locationId String
-  type       String // Reguler, Privat, Prestasi, Ekskul
-  price      Float
-  location   Location @relation(fields: [locationId], references: [id])
+  id           String   @id @default(uuid())
+  locationId   String
+  type         String // Reguler, Privat, Prestasi, Ekskul
+  price        Float
+  sessionCount Int      @default(4) // Jumlah pertemuan per paket (1 - 10)
+  location     Location @relation(fields: [locationId], references: [id])
 }
 
 model SessionTime {
