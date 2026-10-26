@@ -112,9 +112,10 @@ export const registerStudentController = async (
         },
       });
 
-      // Buat pendaftaran baru atau perbarui pendaftaran lama yang berstatus REJECTED
+      // Update pendaftaran yang ada (baik jika sebelumnya REJECTED maupun daftar ulang setelah sesi habis)
+      // agar tidak menduplikasi record pendaftaran yang menyebabkan murid fiktif di jadwal sesi lama coach!
       let registration;
-      if (latestStudentReg && latestStudentReg.status === 'REJECTED') {
+      if (latestStudentReg) {
         registration = await tx.registration.update({
           where: { id: latestStudentReg.id },
           data: {
@@ -127,6 +128,15 @@ export const registerStudentController = async (
             firstMeetSession: data.firstMeetSession,
             paymentMethod: data.paymentMethod,
             paymentProofUrl: data.paymentProofUrl,
+          },
+        });
+
+        // Hapus record pendaftaran ganda lainnya untuk user ini jika ada
+        await tx.registration.deleteMany({
+          where: {
+            userId,
+            type: 'NEW_STUDENT',
+            id: { not: registration.id },
           },
         });
       } else {
