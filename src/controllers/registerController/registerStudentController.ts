@@ -78,7 +78,7 @@ export const registerStudentController = async (
     // 4. Validasi Anti-Bentrok & Kapasitas Mengajar (Capacity & Clash Guard)
     const DAYS_ID = ['Minggu', 'Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu'];
     const meetDate = new Date(data.firstMeetDate);
-    const dayOfWeek = DAYS_ID[meetDate.getDay()];
+    const dayOfWeek = DAYS_ID[meetDate.getDay()] || 'Senin';
 
     const declaredSchedule = await prisma.schedule.findFirst({
       where: {
@@ -97,8 +97,14 @@ export const registerStudentController = async (
     }
 
     const MAX_REGULAR_CAPACITY = 5;
-    const isPrivate = packageData.type.trim().toUpperCase().includes('PRIVAT');
-    const maxCapacity = isPrivate ? 1 : MAX_REGULAR_CAPACITY;
+    const isNewRegistrationPrivat = packageData.type.trim().toUpperCase().includes('PRIVAT');
+
+    const packages = await prisma.package.findMany({
+      select: { id: true, type: true },
+    });
+    const packageTypeMap = new Map(
+      packages.map((p) => [p.id, p.type.trim().toUpperCase()]),
+    );
 
     const existingBookings = await prisma.registration.findMany({
       where: {
@@ -112,20 +118,53 @@ export const registerStudentController = async (
       select: {
         id: true,
         firstMeetDate: true,
+        packageId: true,
+        status: true,
+        user: {
+          select: {
+            studentProfile: {
+              select: { activeSessions: true },
+            },
+          },
+        },
       },
     });
 
     const sameDayBookings = existingBookings.filter((b) => {
       if (!b.firstMeetDate) return false;
       const bDate = new Date(b.firstMeetDate);
-      return DAYS_ID[bDate.getDay()] === dayOfWeek;
+      const bDay = DAYS_ID[bDate.getDay()];
+      if (!bDay || bDay !== dayOfWeek) return false;
+      const activeSessions = b.user?.studentProfile?.activeSessions ?? 0;
+      if (b.status === 'APPROVED' && activeSessions <= 0) return false;
+      return true;
     });
 
-    if (sameDayBookings.length >= maxCapacity) {
-      return res.status(400).json({
-        success: false,
-        message: `Kapasitas pelatih ${instructor.fullName} pada hari ${dayOfWeek} (${data.firstMeetSession}) sudah penuh (${sameDayBookings.length}/${maxCapacity} murid). Silakan pilih sesi atau pelatih lain.`,
-      });
+    const hasExistingPrivat = sameDayBookings.some((b) =>
+      (packageTypeMap.get(b.packageId ?? '') || '').includes('PRIVAT'),
+    );
+
+    if (isNewRegistrationPrivat) {
+      if (sameDayBookings.length > 0) {
+        return res.status(400).json({
+          success: false,
+          message: `Kelas Privat memerlukan sesi eksklusif 1-on-1. Pelatih ${instructor.fullName} sudah memiliki murid pada hari ${dayOfWeek} (${data.firstMeetSession}). Silakan pilih sesi atau pelatih lain.`,
+        });
+      }
+    } else {
+      if (hasExistingPrivat) {
+        return res.status(400).json({
+          success: false,
+          message: `Sesi hari ${dayOfWeek} (${data.firstMeetSession}) bersama pelatih ${instructor.fullName} telah dipesan sebagai Kelas Privat (eksklusif) dan tidak dapat digabung dengan kelas Reguler.`,
+        });
+      }
+
+      if (sameDayBookings.length >= MAX_REGULAR_CAPACITY) {
+        return res.status(400).json({
+          success: false,
+          message: `Kapasitas kelas reguler pelatih ${instructor.fullName} pada hari ${dayOfWeek} (${data.firstMeetSession}) sudah penuh (${sameDayBookings.length}/${MAX_REGULAR_CAPACITY} murid). Silakan pilih sesi atau pelatih lain.`,
+        });
+      }
     }
 
     // 5. Jalankan Transaksi Database (Atomic)
