@@ -32,11 +32,15 @@ export const registerStudentController = async (
       });
     }
 
-    // Jika user sudah disetujui sebagai murid aktif (role STUDENT)
-    if (existingUser.role === 'STUDENT') {
+    // Jika user sudah disetujui sebagai murid aktif (role STUDENT) dan masih memiliki sisa pertemuan (> 0)
+    if (
+      existingUser.role === 'STUDENT' &&
+      (existingUser.studentProfile?.activeSessions ?? 0) > 0
+    ) {
       return res.status(400).json({
         success: false,
-        message: 'Email sudah terdaftar sebagai murid aktif.',
+        message:
+          'Email sudah terdaftar sebagai murid aktif dengan sisa pertemuan yang masih berjalan.',
       });
     }
 

@@ -1,6 +1,13 @@
 import { Request, Response, NextFunction } from 'express';
 import { prisma } from '../../config/prisma';
 
+function getDayName(d: Date | string): string {
+  const dateObj = new Date(d);
+  if (isNaN(dateObj.getTime())) return '';
+  const days = ['Minggu', 'Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu'];
+  return days[dateObj.getDay()] ?? '';
+}
+
 export const getMyRegistrationController = async (
   req: Request,
   res: Response,
@@ -31,7 +38,23 @@ export const getMyRegistrationController = async (
       prisma.sessionTime.findMany(),
     ]);
 
-    const enrichSchedules = (schedules: any[]) => {
+    const enrichSchedules = async (schedules: any[], instructorId: string) => {
+      // Ambil seluruh murid aktif yang disetujui untuk instruktur ini
+      const approvedStudents = await prisma.registration.findMany({
+        where: {
+          instructorId,
+          type: 'NEW_STUDENT',
+          status: 'APPROVED',
+        },
+        include: {
+          user: {
+            include: {
+              studentProfile: true,
+            },
+          },
+        },
+      });
+
       return schedules.map((s) => {
         const match = allSessionTimes.find(
           (st) =>
@@ -44,6 +67,30 @@ export const getMyRegistrationController = async (
         const timeRange = startTime && endTime ? `${startTime} - ${endTime} WIB` : '';
         const locationName = s.location?.name ?? 'Kolam';
 
+        // Hitung total murid aktif yang terdaftar di sesi dan lokasi ini
+        const studentCount = approvedStudents.filter((reg) => {
+          if (reg.locationId && s.locationId && reg.locationId !== s.locationId) {
+            return false;
+          }
+
+          const regSession = (reg.firstMeetSession || '').trim().toLowerCase();
+          const schedSession = (s.sessionName || '').trim().toLowerCase();
+          const sessionMatches =
+            regSession === schedSession ||
+            regSession.includes(schedSession) ||
+            schedSession.includes(regSession);
+          if (!sessionMatches) return false;
+
+          if (reg.firstMeetDate) {
+            const regDay = getDayName(reg.firstMeetDate).toLowerCase();
+            const schedDay = (s.dayOfWeek || '').trim().toLowerCase();
+            if (regDay && schedDay && regDay !== schedDay) return false;
+          }
+
+          const activeSessions = reg.user?.studentProfile?.activeSessions ?? 0;
+          return activeSessions > 0;
+        }).length;
+
         return {
           locationId: s.locationId,
           locationName,
@@ -52,6 +99,7 @@ export const getMyRegistrationController = async (
           startTime,
           endTime,
           timeRange,
+          totalStudents: studentCount,
         };
       });
     };
@@ -70,7 +118,7 @@ export const getMyRegistrationController = async (
       if (existingUser && existingUser.role === 'INSTRUCTOR' && existingUser.instructorProfile) {
         const instructorProfile = existingUser.instructorProfile;
         const schedules = existingUser.schedules ?? [];
-        const enrichedSchedules = enrichSchedules(schedules);
+        const enrichedSchedules = await enrichSchedules(schedules, existingUser.id);
         const scheduleLabels = enrichedSchedules.map(
           (s) =>
             `${s.locationName} — ${s.dayOfWeek}, ${s.sessionName}${s.timeRange ? ` (${s.timeRange})` : ''}`,
@@ -118,6 +166,7 @@ export const getMyRegistrationController = async (
             email: existingUser.email ?? '',
             schoolOrOffice: studentProfile?.schoolOrOffice ?? '',
             tshirtSize: studentProfile?.tshirtSize ?? 'M',
+            activeSessions: studentProfile?.activeSessions ?? 0,
             locationId: '',
             packageId: '',
             firstMeetDate: '',
@@ -148,7 +197,7 @@ export const getMyRegistrationController = async (
     if (registration.type === 'NEW_INSTRUCTOR') {
       const instructorProfile = user?.instructorProfile;
       const schedules = user?.schedules ?? [];
-      const enrichedSchedules = enrichSchedules(schedules);
+      const enrichedSchedules = await enrichSchedules(schedules, user?.id || userId);
 
       const scheduleLabels = enrichedSchedules.map(
         (s) =>
@@ -213,6 +262,7 @@ export const getMyRegistrationController = async (
       email: user?.email ?? '',
       schoolOrOffice: studentProfile?.schoolOrOffice ?? '',
       tshirtSize: studentProfile?.tshirtSize ?? 'M',
+      activeSessions: studentProfile?.activeSessions ?? 0,
       locationId: registration.locationId ?? '',
       packageId: registration.packageId ?? '',
       firstMeetDate: registration.firstMeetDate
