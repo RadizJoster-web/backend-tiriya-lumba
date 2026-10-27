@@ -259,6 +259,34 @@ export const getMyRegistrationController = async (
         : null,
     ]);
 
+    let studentStartTime = '';
+    let studentEndTime = '';
+    let studentTimeRange = '';
+
+    if (registration.firstMeetSession) {
+      const targetSession = registration.firstMeetSession.trim().toLowerCase();
+      const DAYS_ID = ['Minggu', 'Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu'];
+      const meetDate = registration.firstMeetDate ? new Date(registration.firstMeetDate) : null;
+      const regDay = meetDate ? DAYS_ID[meetDate.getDay()]?.toLowerCase() : '';
+
+      const matchedSession =
+        allSessionTimes.find((st) => {
+          const sameSession = st.sessionName.trim().toLowerCase() === targetSession;
+          const sameDay = !regDay || st.dayOfWeek.trim().toLowerCase() === regDay;
+          const sameLoc = !st.locationId || st.locationId === registration.locationId;
+          return sameSession && sameDay && sameLoc;
+        }) ||
+        allSessionTimes.find(
+          (st) => st.sessionName.trim().toLowerCase() === targetSession,
+        );
+
+      if (matchedSession) {
+        studentStartTime = matchedSession.startTime;
+        studentEndTime = matchedSession.endTime;
+        studentTimeRange = `${matchedSession.startTime.replace(':', '.')} - ${matchedSession.endTime.replace(':', '.')}`;
+      }
+    }
+
     const snapshot = {
       kind: 'student',
       fullName: studentProfile?.fullName ?? user?.fullName ?? '',
@@ -279,6 +307,9 @@ export const getMyRegistrationController = async (
         ? new Date(registration.firstMeetDate).toISOString().split('T')[0]
         : '',
       firstMeetSession: registration.firstMeetSession ?? '',
+      startTime: studentStartTime,
+      endTime: studentEndTime,
+      timeRange: studentTimeRange,
       instructorId: registration.instructorId ?? '',
       paymentMethod: registration.paymentMethod ?? 'BANK_TRANSFER',
       paymentProofUrl: registration.paymentProofUrl ?? '',
