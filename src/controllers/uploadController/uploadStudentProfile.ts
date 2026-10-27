@@ -1,4 +1,5 @@
 import { Request, Response, NextFunction } from 'express';
+import { processStudentProfileUpload } from '../../services/uploadService/uploadStudentProfile';
 
 export const uploadStudentProfile = async (
   req: Request,
@@ -6,20 +7,11 @@ export const uploadStudentProfile = async (
   next: NextFunction,
 ) => {
   try {
-    const files = req.files as
-      | { [fieldname: string]: Express.Multer.File[] }
-      | undefined;
-
-    const profilePictureFile =
-      files?.profilePicture?.[0] || files?.profilePictures?.[0];
-    const profilePictureUrl = profilePictureFile
-      ? profilePictureFile.path
-      : null;
-
+    const data = processStudentProfileUpload(req.files as any);
     return res.status(200).json({
       success: true,
       message: 'Upload profile berhasil.',
-      data: { profilePictureUrl },
+      data,
     });
   } catch (err) {
     next(err);

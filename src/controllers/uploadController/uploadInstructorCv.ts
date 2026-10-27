@@ -1,4 +1,5 @@
 import { Request, Response, NextFunction } from 'express';
+import { processInstructorCvUpload } from '../../services/uploadService/uploadInstructorCv';
 
 export const uploadInstructorCv = async (
   req: Request,
@@ -6,17 +7,11 @@ export const uploadInstructorCv = async (
   next: NextFunction,
 ) => {
   try {
-    const files = req.files as
-      | { [fieldname: string]: Express.Multer.File[] }
-      | undefined;
-
-    const cvFile = files?.cv?.[0];
-    const cvUrl = cvFile ? cvFile.path : null;
-
+    const data = processInstructorCvUpload(req.files as any);
     return res.status(200).json({
       success: true,
       message: 'upload profile berhasil.',
-      data: { cvUrl },
+      data,
     });
   } catch (err) {
     next(err);

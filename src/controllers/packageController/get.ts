@@ -1,5 +1,5 @@
 import { Request, Response, NextFunction } from 'express';
-import { prisma } from '../../config/prisma';
+import { getPackagesService } from '../../services/packageService/get';
 
 export const getPackages = async (
   req: Request,
@@ -7,29 +7,7 @@ export const getPackages = async (
   next: NextFunction,
 ) => {
   try {
-    const packages = await prisma.package.findMany({
-      select: {
-        id: true,
-        price: true,
-        type: true,
-        locationId: true,
-        location: {
-          select: {
-            id: true,
-            name: true,
-            category: true,
-            mapUrl: true,
-            area: {
-              select: {
-                id: true,
-                name: true,
-              },
-            },
-          },
-        },
-      },
-    });
-
+    const packages = await getPackagesService();
     return res.status(200).json({
       success: true,
       data: packages,

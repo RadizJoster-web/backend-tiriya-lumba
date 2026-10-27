@@ -1,6 +1,5 @@
 import { Request, Response, NextFunction } from 'express';
-import { prisma } from '../../config/prisma';
-import { createPackageSchema } from './packageSchema';
+import { createPackageService } from '../../services/packageService/create';
 
 export const createPackage = async (
   req: Request,
@@ -8,11 +7,7 @@ export const createPackage = async (
   next: NextFunction,
 ) => {
   try {
-    const validateData = createPackageSchema.parse(req.body);
-    const newPackage = await prisma.package.create({
-      data: validateData,
-    });
-
+    const newPackage = await createPackageService(req.body);
     return res.status(201).json({
       success: true,
       message: 'Package baru berhasil ditambahkan.',

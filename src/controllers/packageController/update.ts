@@ -1,6 +1,5 @@
 import { Request, Response, NextFunction } from 'express';
-import { prisma } from '../../config/prisma';
-import { packageIdParamSchema, updatePackageSchema } from './packageSchema';
+import { updatePackageService } from '../../services/packageService/update';
 
 export const updatePackage = async (
   req: Request,
@@ -8,25 +7,11 @@ export const updatePackage = async (
   next: NextFunction,
 ) => {
   try {
-    const { id } = packageIdParamSchema.parse(req.params);
-
-    if (typeof id !== 'string' || !id) {
-      return res.status(400).json({
-        success: false,
-        message: 'Tolong masukan ID yang valid',
-      });
-    }
-
-    const validateData = updatePackageSchema.parse(req.body);
-    const updatePackage = await prisma.package.update({
-      where: { id },
-      data: validateData,
-    });
-
+    const updatedPackage = await updatePackageService(req.params, req.body);
     return res.status(200).json({
       success: true,
       message: 'Data package berhasil diperbarui.',
-      data: updatePackage,
+      data: updatedPackage,
     });
   } catch (err) {
     next(err);

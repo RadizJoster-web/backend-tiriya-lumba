@@ -1,5 +1,5 @@
 import { Request, Response, NextFunction } from 'express';
-import { prisma } from '../../config/prisma';
+import { approveRegistrationService } from '../../services/registerService/approveRegistration';
 
 export const approveRegistrationController = async (
   req: Request,
@@ -11,109 +11,14 @@ export const approveRegistrationController = async (
     const id = Array.isArray(paramId) ? paramId[0] : paramId;
     const currentUser = (req as any).user;
 
-    if (!id) {
-      return res.status(400).json({
-        success: false,
-        message: 'ID pendaftaran tidak valid.',
-      });
-    }
-
-    const registration = await prisma.registration.findUnique({
-      where: { id },
-      include: { user: true },
-    });
-
-    if (!registration) {
-      return res.status(404).json({
-        success: false,
-        message: 'Data pendaftaran tidak ditemukan.',
-      });
-    }
-
-    if (registration.status === 'APPROVED') {
-      return res.status(400).json({
-        success: false,
-        message: 'Pendaftaran ini sudah disetujui sebelumnya.',
-      });
-    }
-
-    // Role check: Pool Manager hanya boleh approve siswa di kolamnya
-    if (currentUser.role === 'POOL_MANAGER') {
-      if (registration.type !== 'NEW_STUDENT') {
-        return res.status(403).json({
-          success: false,
-          message:
-            'Pengelola kolam hanya memiliki izin menyetujui pendaftaran murid.',
-        });
-      }
-      if (registration.locationId !== currentUser.locationId) {
-        return res.status(403).json({
-          success: false,
-          message:
-            'Anda tidak memiliki hak akses untuk menyetujui pendaftaran di kolam ini.',
-        });
-      }
-    }
-
-    await prisma.$transaction(async (tx) => {
-      // 1. Ubah status registrasi ke APPROVED
-      await tx.registration.update({
-        where: { id },
-        data: {
-          status: 'APPROVED',
-          rejectionReason: null,
-        },
-      });
-
-      // 2. Update user status & role sesuai jenis pendaftaran
-      if (registration.type === 'NEW_INSTRUCTOR') {
-        await tx.user.update({
-          where: { id: registration.userId },
-          data: {
-            role: 'INSTRUCTOR',
-            isActive: true,
-          },
-        });
-      } else if (registration.type === 'NEW_STUDENT') {
-        await tx.user.update({
-          where: { id: registration.userId },
-          data: {
-            role: 'STUDENT',
-            isActive: true,
-          },
-        });
-
-        // Ambil sessionCount dari paket yang didaftarkan (default 4, maks 10)
-        let activeSessions = 4;
-        if (registration.packageId) {
-          const pkg = await tx.package.findUnique({
-            where: { id: registration.packageId },
-            select: { sessionCount: true },
-          });
-          if (pkg?.sessionCount && pkg.sessionCount > 0) {
-            activeSessions = Math.min(pkg.sessionCount, 10);
-          }
-        }
-
-        const studentProfile = await tx.studentProfile.findUnique({
-          where: { userId: registration.userId },
-        });
-
-        if (studentProfile) {
-          await tx.studentProfile.update({
-            where: { userId: registration.userId },
-            data: { activeSessions },
-          });
-        }
-      }
-    });
+    const result = await approveRegistrationService(id as string, currentUser);
 
     return res.status(200).json({
       success: true,
-      message: `Pendaftaran ${registration.type === 'NEW_INSTRUCTOR' ? 'pelatih' : 'murid'} berhasil disetujui.`,
+      message: `Pendaftaran ${result.type === 'NEW_INSTRUCTOR' ? 'pelatih' : 'murid'} berhasil disetujui.`,
       data: {
-        registrationId: registration.id,
-        status: 'APPROVED',
+        registrationId: result.registrationId,
+        status: result.status,
       },
     });
   } catch (error) {

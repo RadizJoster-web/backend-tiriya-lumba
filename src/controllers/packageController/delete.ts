@@ -1,6 +1,5 @@
 import { Request, Response, NextFunction } from 'express';
-import { prisma } from '../../config/prisma';
-import { packageIdParamSchema } from './packageSchema';
+import { deletePackageService } from '../../services/packageService/delete';
 
 export const deletePackage = async (
   req: Request,
@@ -8,19 +7,7 @@ export const deletePackage = async (
   next: NextFunction,
 ) => {
   try {
-    const { id } = packageIdParamSchema.parse(req.params);
-
-    if (typeof id !== 'string' || !id) {
-      return res.status(400).json({
-        success: false,
-        message: 'Tolong masukan ID yang valid',
-      });
-    }
-
-    await prisma.package.delete({
-      where: { id },
-    });
-
+    await deletePackageService(req.params);
     return res.status(200).json({
       success: true,
       message: 'Package kolam berhasil dihapus.',

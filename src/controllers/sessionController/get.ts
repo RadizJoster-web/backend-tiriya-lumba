@@ -1,6 +1,5 @@
 import { Request, Response, NextFunction } from 'express';
-import { prisma } from '../../config/prisma';
-import { getSessionFilterSchema } from './sessionSchema';
+import { getSessionsService } from '../../services/sessionService/get';
 
 export const getSessions = async (
   req: Request,
@@ -8,21 +7,7 @@ export const getSessions = async (
   next: NextFunction,
 ) => {
   try {
-    // 1. Validasi Query Parameter dari Request
-    const { locationId, dayOfWeek } = getSessionFilterSchema.parse(req.query);
-
-    // 2. Query Prisma: Filter berdasarkan Hari & (Lokasi Spesifik ATAU Sesi Global)
-    const sessions = await prisma.sessionTime.findMany({
-      where: {
-        dayOfWeek: dayOfWeek,
-        OR: [
-          { locationId: locationId }, // Sesi khusus lokasi tersebut
-          { locationId: null }, // Sesi global yang berlaku di semua lokasi
-        ],
-      },
-      orderBy: [{ startTime: 'asc' }],
-    });
-
+    const sessions = await getSessionsService(req.query);
     return res.status(200).json({
       success: true,
       data: sessions,

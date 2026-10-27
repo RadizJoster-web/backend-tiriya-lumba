@@ -1,6 +1,5 @@
 import { Request, Response, NextFunction } from 'express';
-import { prisma } from '../../config/prisma';
-import { locationIdParamSchema } from './locationSchema';
+import { deleteLocationService } from '../../services/locationService/delete';
 
 export const deleteLocation = async (
   req: Request,
@@ -8,19 +7,7 @@ export const deleteLocation = async (
   next: NextFunction,
 ) => {
   try {
-    const { id } = locationIdParamSchema.parse(req.params);
-
-    if (typeof id !== 'string' || !id) {
-      return res.status(400).json({
-        success: false,
-        message: 'Tolong masukan ID yang valid',
-      });
-    }
-
-    await prisma.location.delete({
-      where: { id },
-    });
-
+    await deleteLocationService(req.params);
     return res.status(200).json({
       success: true,
       message: 'Lokasi kolam berhasil dihapus.',

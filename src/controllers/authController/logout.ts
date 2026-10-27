@@ -1,4 +1,5 @@
 import { Request, Response, NextFunction } from 'express';
+import { logoutService } from '../../services/authService/logout';
 
 export const logout = async (
   req: Request,
@@ -6,42 +7,17 @@ export const logout = async (
   next: NextFunction,
 ) => {
   try {
-    // Opsi cookie wajib sama/presisi dengan opsi saat cookie di-set di browser
-    const cookieOptions = {
-      path: '/',
+    await logoutService();
+
+    res.clearCookie('access_token', {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
-      sameSite: (process.env.NODE_ENV === 'production' ? 'none' : 'lax') as
-        | 'none'
-        | 'lax',
-    };
-
-    // 1. Ambil seluruh nama cookie yang terdeteksi di request (cookies & signedCookies)
-    const activeCookies = [
-      ...Object.keys(req.cookies || {}),
-      ...Object.keys(req.signedCookies || {}),
-    ];
-
-    // 2. Daftar cookie autentikasi bawaan (sebagai cadangan)
-    const defaultAuthCookies = [
-      'token',
-      'accessToken',
-      'refreshToken',
-      'sessionId',
-    ];
-
-    // 3. Gabungkan dan hapus seluruh cookie secara unik
-    const allCookiesToClear = Array.from(
-      new Set([...activeCookies, ...defaultAuthCookies]),
-    );
-
-    allCookiesToClear.forEach((cookieName) => {
-      res.clearCookie(cookieName, cookieOptions);
+      sameSite: 'lax',
     });
 
     return res.status(200).json({
       success: true,
-      message: 'Logout berhasil. Seluruh cookie dan sesi telah dibersihkan.',
+      message: 'Logout berhasil.',
     });
   } catch (error) {
     next(error);

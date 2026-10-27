@@ -1,5 +1,5 @@
 import { Request, Response, NextFunction } from 'express';
-import { prisma } from '../../config/prisma';
+import { getAreasService } from '../../services/areaService/get';
 
 export const getAreas = async (
   req: Request,
@@ -7,15 +7,7 @@ export const getAreas = async (
   next: NextFunction,
 ) => {
   try {
-    const areas = await prisma.area.findMany({
-      include: {
-        _count: {
-          select: { locations: true }, // Menampilkan jumlah kolam di area tersebut
-        },
-      },
-      orderBy: { name: 'asc' },
-    });
-
+    const areas = await getAreasService();
     return res.status(200).json({
       success: true,
       data: areas,

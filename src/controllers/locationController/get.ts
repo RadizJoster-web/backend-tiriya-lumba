@@ -1,5 +1,5 @@
 import { Request, Response, NextFunction } from 'express';
-import { prisma } from '../../config/prisma';
+import { getLocationsService } from '../../services/locationService/get';
 
 export const getLocations = async (
   req: Request,
@@ -7,10 +7,7 @@ export const getLocations = async (
   next: NextFunction,
 ) => {
   try {
-    const locations = await prisma.location.findMany({
-      orderBy: { name: 'desc' },
-    });
-
+    const locations = await getLocationsService();
     return res.status(200).json({
       success: true,
       data: locations,

@@ -1,6 +1,5 @@
 import { Request, Response, NextFunction } from 'express';
-import { prisma } from '../../config/prisma';
-import { createSessionSchema } from './sessionSchema';
+import { createSessionService } from '../../services/sessionService/create';
 
 export const createSession = async (
   req: Request,
@@ -8,12 +7,7 @@ export const createSession = async (
   next: NextFunction,
 ) => {
   try {
-    const validatedData = createSessionSchema.parse(req.body);
-
-    const newSession = await prisma.sessionTime.create({
-      data: validatedData,
-    });
-
+    const newSession = await createSessionService(req.body);
     return res.status(201).json({
       success: true,
       message: 'Sesi baru berhasil ditambahkan.',

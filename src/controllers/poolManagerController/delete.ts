@@ -1,6 +1,5 @@
 import { Request, Response, NextFunction } from 'express';
-import { prisma } from '../../config/prisma';
-import { paramIdSchema } from './poolManagerSchema';
+import { deletePoolManagerService } from '../../services/poolManagerService/delete';
 
 export const deletePoolManager = async (
   req: Request,
@@ -8,23 +7,7 @@ export const deletePoolManager = async (
   next: NextFunction,
 ) => {
   try {
-    const { id } = paramIdSchema.parse(req.params);
-
-    const existingManager = await prisma.user.findFirst({
-      where: { id, role: 'POOL_MANAGER' },
-    });
-
-    if (!existingManager) {
-      return res.status(404).json({
-        success: false,
-        message: 'Manager kolam renang tidak ditemukan.',
-      });
-    }
-
-    await prisma.user.delete({
-      where: { id },
-    });
-
+    await deletePoolManagerService(req.params);
     return res.status(200).json({
       success: true,
       message: 'Manager kolam renang berhasil dihapus.',
