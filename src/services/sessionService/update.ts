@@ -1,6 +1,7 @@
 import { prisma } from '../../config/prisma';
 import { AppError } from '../../utils/appError';
 import { paramIdSchema, updateSessionSchema } from './sessionSchema';
+import { revalidateVercelTags } from '../../utils/revalidateWebhook';
 
 export const updateSessionService = async (params: unknown, body: unknown) => {
   const { id } = paramIdSchema.parse(params);
@@ -14,8 +15,13 @@ export const updateSessionService = async (params: unknown, body: unknown) => {
     throw new AppError(404, 'Sesi tidak ditemukan.');
   }
 
-  return prisma.sessionTime.update({
+  const updated = await prisma.sessionTime.update({
     where: { id },
     data: validatedData,
   });
+
+  // Purge CDN cache tags di latar belakang
+  revalidateVercelTags(['sessions']);
+
+  return updated;
 };

@@ -1,6 +1,7 @@
 import { prisma } from '../../config/prisma';
 import { AppError } from '../../utils/appError';
 import { createLocationSchema } from './locationSchema';
+import { revalidateVercelTags } from '../../utils/revalidateWebhook';
 
 export const createLocationService = async (body: unknown) => {
   const validatedData = createLocationSchema.parse(body);
@@ -27,7 +28,12 @@ export const createLocationService = async (body: unknown) => {
     );
   }
 
-  return prisma.location.create({
+  const created = await prisma.location.create({
     data: validatedData,
   });
+
+  // Purge CDN cache tags di latar belakang
+  revalidateVercelTags(['locations', 'stats']);
+
+  return created;
 };

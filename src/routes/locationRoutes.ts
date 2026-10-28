@@ -1,6 +1,6 @@
 import { Router } from 'express';
-const router = Router();
 import { authMiddleware, authorize } from '../middlewares/authMiddleware';
+import { cachePublicCdn } from '../middlewares/cacheControl';
 
 import { getPublicLocations } from '../controllers/locationController/getPublicLocations';
 import { getLocations } from '../controllers/locationController/get';
@@ -9,10 +9,12 @@ import { createLocation } from '../controllers/locationController/create';
 import { updateLocation } from '../controllers/locationController/update';
 import { deleteLocation } from '../controllers/locationController/delete';
 
-// Public Routes
-router.get('/public', getPublicLocations);
-router.get('/', getLocations);
-router.get('/:id', getLocationById);
+const router = Router();
+
+// Public Routes (Tier 1: Vercel CDN Cache)
+router.get('/public', cachePublicCdn, getPublicLocations);
+router.get('/', cachePublicCdn, getLocations);
+router.get('/:id', cachePublicCdn, getLocationById);
 
 // Private Routes
 router.post('/', authMiddleware, authorize('ADMIN'), createLocation);

@@ -1,6 +1,7 @@
 import { prisma } from '../../config/prisma';
 import { AppError } from '../../utils/appError';
 import { areaIdParamSchema } from './areaSchema';
+import { revalidateVercelTags } from '../../utils/revalidateWebhook';
 
 export const deleteAreaService = async (params: unknown) => {
   const { id } = areaIdParamSchema.parse(params);
@@ -28,6 +29,9 @@ export const deleteAreaService = async (params: unknown) => {
   await prisma.area.delete({
     where: { id },
   });
+
+  // Purge CDN cache tags di latar belakang
+  revalidateVercelTags(['areas', 'locations', 'stats']);
 
   return true;
 };

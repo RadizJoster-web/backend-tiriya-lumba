@@ -1,6 +1,7 @@
 import { prisma } from '../../config/prisma';
 import { AppError } from '../../utils/appError';
 import { CurrentUserPayload } from './get';
+import { revalidateVercelTags } from '../../utils/revalidateWebhook';
 
 export const approveRegistrationService = async (
   id: string,
@@ -83,6 +84,9 @@ export const approveRegistrationService = async (
       }
     }
   });
+
+  // Purge CDN cache stats di latar belakang karena jumlah murid/guru bertambah
+  revalidateVercelTags(['stats']);
 
   return {
     registrationId: registration.id,

@@ -1,5 +1,6 @@
 import { Router } from 'express';
 import { authMiddleware, authorize } from '../middlewares/authMiddleware';
+import { privateOperational } from '../middlewares/cacheControl';
 import {
   getAttendanceTodayController,
   submitAttendanceController,
@@ -9,26 +10,28 @@ import {
 
 const router = Router();
 
-// Endpoint untuk mengambil riwayat absensi khusus untuk murid yang login
-router.get('/my-history', authMiddleware, getMyAttendanceHistoryController);
+// Tier 3: Riwayat absensi murid login
+router.get('/my-history', privateOperational, authMiddleware, getMyAttendanceHistoryController);
 
-// Endpoint untuk mengambil orang yang jadwalnya hari ini
+// Tier 3: Daftar murid dengan jadwal hari ini (Admin & Pool Manager Scoped)
 router.get(
   '/today',
+  privateOperational,
   authMiddleware,
   authorize('ADMIN', 'POOL_MANAGER'),
   getAttendanceTodayController,
 );
 
-// Endpoint untuk mengambil riwayat absensi
+// Tier 3: Riwayat absensi (Admin & Pool Manager Scoped)
 router.get(
   '/',
+  privateOperational,
   authMiddleware,
   authorize('ADMIN', 'POOL_MANAGER'),
   getAttendanceHistoryController,
 );
 
-// Endpoint untuk submit pencatatan absensi
+// Endpoint submit pencatatan absensi
 router.post(
   '/',
   authMiddleware,

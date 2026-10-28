@@ -1,12 +1,14 @@
 import { Router } from 'express';
 import { authMiddleware, authorize } from '../middlewares/authMiddleware';
+import { privateDashboardSummary } from '../middlewares/cacheControl';
 import { getDashboardSummaryController } from '../controllers/dashboardController';
 
 const router = Router();
 
-// Endpoint agregasi ringkasan statistik dasbor (khusus ADMIN & POOL_MANAGER)
+// Tier 4: Agregasi ringkasan statistik dasbor (khusus ADMIN & POOL_MANAGER)
 router.get(
   '/summary',
+  privateDashboardSummary,
   authMiddleware,
   authorize('ADMIN', 'POOL_MANAGER'),
   getDashboardSummaryController,

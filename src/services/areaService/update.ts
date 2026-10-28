@@ -1,6 +1,7 @@
 import { prisma } from '../../config/prisma';
 import { AppError } from '../../utils/appError';
 import { areaIdParamSchema, updateAreaSchema } from './areaSchema';
+import { revalidateVercelTags } from '../../utils/revalidateWebhook';
 
 export const updateAreaService = async (params: unknown, body: unknown) => {
   const { id } = areaIdParamSchema.parse(params);
@@ -24,8 +25,13 @@ export const updateAreaService = async (params: unknown, body: unknown) => {
     }
   }
 
-  return prisma.area.update({
+  const updated = await prisma.area.update({
     where: { id },
     data: validatedData,
   });
+
+  // Purge CDN cache tags di latar belakang
+  revalidateVercelTags(['areas', 'locations', 'stats']);
+
+  return updated;
 };

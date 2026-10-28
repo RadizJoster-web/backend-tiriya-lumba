@@ -1,7 +1,7 @@
 import { Router } from 'express';
-const router = Router();
-
 import { authMiddleware, authorize } from '../middlewares/authMiddleware';
+import { privateOperational } from '../middlewares/cacheControl';
+
 import { registerStudentController } from '../controllers/registerController/registerStudentController';
 import { registerInstructorController } from '../controllers/registerController/registerInstructorController';
 import { getRegistrationsController } from '../controllers/registerController/get';
@@ -10,12 +10,15 @@ import { getMyRegistrationController } from '../controllers/registerController/g
 import { approveRegistrationController } from '../controllers/registerController/approveRegistration';
 import { rejectRegistrationController } from '../controllers/registerController/rejectRegistration';
 
-// Rute untuk user yang sedang login membaca status pendaftarannya sendiri
-router.get('/me', authMiddleware, getMyRegistrationController);
+const router = Router();
 
-// Rute manajemen pendaftaran (Admin & Pool Manager)
+// Tier 3: Rute status pendaftaran user sendiri (Data Operasional Realtime)
+router.get('/me', privateOperational, authMiddleware, getMyRegistrationController);
+
+// Tier 3: Rute manajemen pendaftaran (Admin & Pool Manager Scoped)
 router.get(
   '/',
+  privateOperational,
   authMiddleware,
   authorize('ADMIN', 'POOL_MANAGER'),
   getRegistrationsController,
@@ -23,6 +26,7 @@ router.get(
 
 router.get(
   '/:id',
+  privateOperational,
   authMiddleware,
   authorize('ADMIN', 'POOL_MANAGER'),
   getRegistrationByIdController,
