@@ -8,7 +8,7 @@ export const getInstructorsPaginationSchema = z.object({
   limit: z.coerce
     .number({ message: 'Limit harus berupa angka' })
     .min(1, { message: 'Limit minimal 1' })
-    .max(50, { message: 'Limit maksimal 50' })
+    .max(100, { message: 'Limit maksimal 100' })
     .default(10),
 });
 
