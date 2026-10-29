@@ -7,7 +7,9 @@ export const processStudentPaymentUpload = (
 ) => {
   const map = files as MulterFilesMap | undefined;
   const paymentFile = map?.paymentProof?.[0] || map?.profilePicture?.[0];
-  const paymentProofUrl = paymentFile ? paymentFile.path : null;
+  const paymentProofUrl = paymentFile
+    ? paymentFile.path.replace(/\\/g, '/')
+    : null;
   return {
     paymentProofUrl,
     profilePictureUrl: paymentProofUrl,

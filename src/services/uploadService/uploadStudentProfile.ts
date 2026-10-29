@@ -8,6 +8,8 @@ export const processStudentProfileUpload = (
   const map = files as MulterFilesMap | undefined;
   const profilePictureFile =
     map?.profilePicture?.[0] || map?.profilePictures?.[0];
-  const profilePictureUrl = profilePictureFile ? profilePictureFile.path : null;
+  const profilePictureUrl = profilePictureFile
+    ? profilePictureFile.path.replace(/\\/g, '/')
+    : null;
   return { profilePictureUrl };
 };

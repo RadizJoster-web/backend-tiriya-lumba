@@ -3,6 +3,7 @@ import {
   buildMonthChartData,
   buildYearChartData,
 } from './chartHelper';
+import { AppError } from '../../utils/appError';
 
 export interface DashboardSummaryQuery {
   year?: string | number;
@@ -23,6 +24,12 @@ export const getDashboardSummaryService = async (
   const monthQuery = query.month || 'ALL';
 
   const isPoolManager = currentUser.role === 'POOL_MANAGER';
+  if (isPoolManager && !currentUser.locationId) {
+    throw new AppError(
+      403,
+      'Akses ditolak: Akun manajer tidak terikat ke lokasi kolam.',
+    );
+  }
   const locationId = isPoolManager ? currentUser.locationId ?? undefined : undefined;
 
   // 1. Total Siswa Aktif

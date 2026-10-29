@@ -52,14 +52,11 @@ export const errorHandler = (
       message: errMessage,
     });
   }
-  8;
 
-  // Balasan respon JSON yang konsisten ke Klien
+  // Balasan respon JSON yang aman dan konsisten ke Klien (Stack trace tidak dibocorkan ke client)
   return res.status(statusCode).json({
     success: false,
     errMessage,
-    // Sembunyikan stack trace jika aplikasi berada di lingkungan produksi
-    ...(process.env.NODE_ENV === 'development' && { stack: err.stack }),
   });
 };
 

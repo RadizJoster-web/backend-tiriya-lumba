@@ -18,6 +18,17 @@ export const rejectRegistrationService = async (
     throw new AppError(404, 'Data pendaftaran tidak ditemukan.');
   }
 
+  if (registration.status === 'REJECTED') {
+    throw new AppError(400, 'Pendaftaran ini sudah ditolak sebelumnya.');
+  }
+
+  if (registration.status === 'APPROVED') {
+    throw new AppError(
+      400,
+      'Pendaftaran ini sudah berstatus disetujui dan tidak dapat ditolak secara sepihak.',
+    );
+  }
+
   if (currentUser.role === 'POOL_MANAGER') {
     if (registration.type !== 'NEW_STUDENT') {
       throw new AppError(

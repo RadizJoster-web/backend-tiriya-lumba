@@ -1,12 +1,16 @@
 import { Router } from 'express';
-const router = Router();
-
-import { upload } from '../middlewares/uploadMiddleware';
+import { upload, validateMagicBytesMiddleware } from '../middlewares/uploadMiddleware';
+import { authMiddleware } from '../middlewares/authMiddleware';
 
 import { uploadStudentProfile } from '../controllers/uploadController/uploadStudentProfile';
 import { uploadStudentPayment } from '../controllers/uploadController/uploadStudentPayment';
 import { uploadInstructorCv } from '../controllers/uploadController/uploadInstructorCv';
 import { uploadInstructorProfile } from '../controllers/uploadController/uploadInstructorProfile';
+
+const router = Router();
+
+// Wajib autentikasi untuk seluruh upload berkas
+router.use(authMiddleware);
 
 router.post(
   ['/student/profile', '/student/profil'],
@@ -14,6 +18,7 @@ router.post(
     { name: 'profilePicture', maxCount: 1 },
     { name: 'profilePictures', maxCount: 1 },
   ]),
+  validateMagicBytesMiddleware,
   uploadStudentProfile,
 );
 
@@ -23,12 +28,14 @@ router.post(
     { name: 'paymentProof', maxCount: 1 },
     { name: 'profilePicture', maxCount: 1 },
   ]),
+  validateMagicBytesMiddleware,
   uploadStudentPayment,
 );
 
 router.post(
   '/instructor/cv',
   upload.fields([{ name: 'cv', maxCount: 1 }]),
+  validateMagicBytesMiddleware,
   uploadInstructorCv,
 );
 
@@ -38,6 +45,7 @@ router.post(
     { name: 'profilePicture', maxCount: 1 },
     { name: 'profilePictures', maxCount: 1 },
   ]),
+  validateMagicBytesMiddleware,
   uploadInstructorProfile,
 );
 

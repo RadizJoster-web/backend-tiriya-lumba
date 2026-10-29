@@ -2,13 +2,16 @@ import bcrypt from 'bcrypt';
 import { prisma } from '../../config/prisma';
 import { AppError } from '../../utils/appError';
 import { resetPasswordSchema } from './authSchema';
+import { hashToken } from '../../utils/cryptoHelper';
 
 export const resetPasswordService = async (body: unknown) => {
   const { token, newPassword } = resetPasswordSchema.parse(body);
 
+  const hashedToken = hashToken(token);
+
   const user = await prisma.user.findFirst({
     where: {
-      resetToken: token,
+      OR: [{ resetToken: hashedToken }, { resetToken: token }],
     },
   });
 

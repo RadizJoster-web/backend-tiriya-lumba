@@ -1,5 +1,5 @@
 import { Router } from 'express';
-const router = Router();
+import { authRateLimit } from '../middlewares/rateLimiter';
 
 import { register } from '../controllers/authController/register';
 import { verifyOtp } from '../controllers/authController/verifyOtp';
@@ -8,11 +8,13 @@ import { logout } from '../controllers/authController/logout';
 import { forgotPassword } from '../controllers/authController/forgotPassword';
 import { resetPassword } from '../controllers/authController/resetPassword';
 
-router.post('/register', register);
-router.post('/verify-otp', verifyOtp);
-router.post('/login', login);
+const router = Router();
+
+router.post('/register', authRateLimit, register);
+router.post('/verify-otp', authRateLimit, verifyOtp);
+router.post('/login', authRateLimit, login);
 router.post('/logout', logout);
-router.post('/forgot-password', forgotPassword);
-router.post('/reset-password', resetPassword);
+router.post('/forgot-password', authRateLimit, forgotPassword);
+router.post('/reset-password', authRateLimit, resetPassword);
 
 export default router;

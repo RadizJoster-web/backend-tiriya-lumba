@@ -7,7 +7,8 @@ export const submitAttendanceController = async (
   next: NextFunction,
 ) => {
   try {
-    await submitAttendanceService(req.body);
+    const currentUser = (req as any).user;
+    await submitAttendanceService(req.body, currentUser);
     return res.status(200).json({
       success: true,
       message: 'Absensi hari ini berhasil disimpan.',

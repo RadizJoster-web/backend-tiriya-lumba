@@ -7,6 +7,6 @@ export const processInstructorCvUpload = (
 ) => {
   const map = files as MulterFilesMap | undefined;
   const cvFile = map?.cv?.[0];
-  const cvUrl = cvFile ? cvFile.path : null;
+  const cvUrl = cvFile ? cvFile.path.replace(/\\/g, '/') : null;
   return { cvUrl };
 };

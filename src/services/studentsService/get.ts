@@ -1,5 +1,6 @@
 import { prisma } from '../../config/prisma';
 import { calculateAge, calculateValidityDate } from './studentHelper';
+import { AppError } from '../../utils/appError';
 
 export interface CurrentUserPayload {
   role?: string;
@@ -12,14 +13,18 @@ export const getStudentsService = async (currentUser?: CurrentUserPayload) => {
   };
 
   if (currentUser && currentUser.role === 'POOL_MANAGER') {
-    if (currentUser.locationId) {
-      whereClause.registrations = {
-        some: {
-          locationId: currentUser.locationId,
-          status: 'APPROVED',
-        },
-      };
+    if (!currentUser.locationId) {
+      throw new AppError(
+        403,
+        'Akses ditolak: Akun pengelola kolam tidak terikat ke lokasi mana pun.',
+      );
     }
+    whereClause.registrations = {
+      some: {
+        locationId: currentUser.locationId,
+        status: 'APPROVED',
+      },
+    };
   }
 
   const students = await prisma.user.findMany({

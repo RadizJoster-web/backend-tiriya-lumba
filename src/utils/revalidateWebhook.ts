@@ -9,7 +9,14 @@ export async function revalidateVercelTags(tags: string[]): Promise<void> {
     process.env.FRONTEND_REVALIDATE_URL ||
     process.env.LANDING_PAGE_REVALIDATE_URL ||
     'http://localhost:3000/api/revalidate';
-  const secret = process.env.REVALIDATE_SECRET || 'tirya-lumba-revalidate-secret-key';
+  const secret = process.env.REVALIDATE_SECRET;
+
+  if (!secret) {
+    console.warn(
+      '[revalidateWebhook] REVALIDATE_SECRET tidak terdefinisi di environment. Revalidasi dibatalkan.',
+    );
+    return;
+  }
 
   try {
     const res = await fetch(revalidateUrl, {

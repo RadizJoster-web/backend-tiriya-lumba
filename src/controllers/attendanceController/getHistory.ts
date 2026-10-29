@@ -7,7 +7,8 @@ export const getAttendanceHistoryController = async (
   next: NextFunction,
 ) => {
   try {
-    const result = await getAttendanceHistoryService();
+    const currentUser = (req as any).user;
+    const result = await getAttendanceHistoryService(currentUser);
     return res.status(200).json({
       success: true,
       totalItems: result.length,

@@ -39,15 +39,19 @@ export const authMiddleware = async (
     }
 
     // 2. Dekode & Verifikasi JWT (coba kandidat token)
+    const secret = process.env.JWT_SECRET;
+    if (!secret) {
+      throw new Error('FATAL: JWT_SECRET environment variable is not defined.');
+    }
+
     let decoded: JwtPayload | null = null;
     let lastError: any = null;
 
     for (const cand of candidates) {
       try {
-        decoded = jwt.verify(
-          cand,
-          process.env.JWT_SECRET || 'default_secret',
-        ) as JwtPayload;
+        decoded = jwt.verify(cand, secret, {
+          algorithms: ['HS256'],
+        }) as JwtPayload;
         if (decoded) break;
       } catch (err) {
         lastError = err;

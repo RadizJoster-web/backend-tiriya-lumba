@@ -1,7 +1,7 @@
 import { prisma } from '../../config/prisma';
 import { AppError } from '../../utils/appError';
 import { rescheduleInputSchema } from './instructorSchema';
-import { ONE_MONTH_MS } from './getRescheduleStatus';
+import { ONE_MONTH_MS, DAYS_ID } from './getRescheduleStatus';
 
 export const rescheduleScheduleService = async (
   userId: string,
@@ -45,9 +45,41 @@ export const rescheduleScheduleService = async (
 
   const { schedules: newSchedules } = rescheduleInputSchema.parse(body);
 
-  const activeStudentSchedules = user.schedules.filter(
-    (s) => s.studentId !== null,
-  );
+  // Ambil pendaftaran murid aktif dengan sisa pertemuan > 0
+  const activeRegistrations = await prisma.registration.findMany({
+    where: {
+      instructorId: userId,
+      status: 'APPROVED',
+      type: 'NEW_STUDENT',
+      user: {
+        studentProfile: {
+          activeSessions: { gt: 0 },
+        },
+      },
+    },
+    select: {
+      locationId: true,
+      firstMeetDate: true,
+      firstMeetSession: true,
+    },
+  });
+
+  // Tentukan jadwal yang memiliki murid (dari model Schedule atau Registration)
+  const activeStudentSchedules = user.schedules.filter((s) => {
+    if (s.studentId !== null) return true;
+    return activeRegistrations.some((reg) => {
+      if (!reg.firstMeetDate) return false;
+      const d = new Date(reg.firstMeetDate);
+      const dayName = DAYS_ID[d.getDay()];
+      return (
+        reg.locationId === s.locationId &&
+        reg.firstMeetSession?.trim().toLowerCase() ===
+          s.sessionName.trim().toLowerCase() &&
+        dayName?.trim().toLowerCase() === s.dayOfWeek.trim().toLowerCase()
+      );
+    });
+  });
+
   for (const activeSchedule of activeStudentSchedules) {
     const isRetained = newSchedules.some(
       (ns) =>
@@ -61,7 +93,7 @@ export const rescheduleScheduleService = async (
     if (!isRetained) {
       throw new AppError(
         400,
-        `Tidak dapat menghapus sesi ${activeSchedule.dayOfWeek} (${activeSchedule.sessionName}) di ${activeSchedule.location?.name ?? 'Kolam'} karena ada murid yang sedang dijadwalkan pada sesi tersebut.`,
+        `Tidak dapat menghapus sesi ${activeSchedule.dayOfWeek} (${activeSchedule.sessionName}) di ${activeSchedule.location?.name ?? 'Kolam'} karena ada murid aktif yang sedang dijadwalkan pada sesi tersebut.`,
       );
     }
   }
@@ -82,10 +114,13 @@ export const rescheduleScheduleService = async (
   }
 
   await prisma.$transaction(async (tx) => {
+    // Hanya hapus slot yang tidak memiliki murid aktif
+    const protectedScheduleIds = activeStudentSchedules.map((s) => s.id);
+
     await tx.schedule.deleteMany({
       where: {
         instructorId: userId,
-        studentId: null,
+        id: { notIn: protectedScheduleIds },
       },
     });
 

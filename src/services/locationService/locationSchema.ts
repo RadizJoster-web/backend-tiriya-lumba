@@ -1,14 +1,31 @@
 import { z } from 'zod';
 
 export const createLocationSchema = z.object({
-  name: z.string({ message: 'Nama kolam renang tidak boleh kosong' }).min(1),
-  areaId: z.string({ message: 'Area kolam renang tidak boleh kosong' }).min(1),
-  category: z.string({ message: 'Kategori tidak boleh kosong' }).min(1),
+  name: z
+    .string({ message: 'Nama kolam renang tidak boleh kosong' })
+    .trim()
+    .min(1, { message: 'Nama kolam renang minimal 1 karakter' })
+    .max(100, { message: 'Nama kolam renang maksimal 100 karakter' }),
+  areaId: z
+    .string({ message: 'Area kolam renang tidak boleh kosong' })
+    .trim()
+    .min(1)
+    .max(100),
+  category: z
+    .string({ message: 'Kategori tidak boleh kosong' })
+    .trim()
+    .min(1)
+    .max(100),
   mapUrl: z
     .string({
-      message: 'Tolong masukan lokasai koordinat sesuai titik di google map',
+      message: 'Tolong masukan lokasi koordinat sesuai titik di google map',
     })
-    .min(1),
+    .trim()
+    .url({ message: 'Format URL Google Maps tidak valid' })
+    .max(500, { message: 'URL Google Maps terlalu panjang (maksimal 500 karakter)' })
+    .refine((val) => /^https?:\/\//i.test(val), {
+      message: 'URL Google Maps harus menggunakan protokol HTTP atau HTTPS',
+    }),
 });
 
 export const locationIdParamSchema = z.object({

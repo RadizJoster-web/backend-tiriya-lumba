@@ -111,6 +111,7 @@ export const getAvailableInstructorsService = async (query: unknown) => {
 
       return {
         id: instructor.id,
+        instructorId: instructor.id,
         fullName: instructor.fullName,
         profilePictureUrl: instructor.profilePictureUrl,
         experience: instructor.instructorProfile?.experience || '-',
@@ -118,6 +119,8 @@ export const getAvailableInstructorsService = async (query: unknown) => {
         shortBio: instructor.instructorProfile?.shortBio || '',
         currentSlots,
         remainingSlots,
+        currentStudentCount: currentSlots,
+        maxCapacity: MAX_REGULAR_CAPACITY,
       };
     });
 };

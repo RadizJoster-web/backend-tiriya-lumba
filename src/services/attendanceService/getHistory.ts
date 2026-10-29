@@ -1,7 +1,38 @@
 import { prisma } from '../../config/prisma';
+import { AppError } from '../../utils/appError';
 
-export const getAttendanceHistoryService = async () => {
+export interface CurrentUserPayload {
+  role?: string;
+  locationId?: string | null;
+}
+
+export const getAttendanceHistoryService = async (
+  currentUser?: CurrentUserPayload,
+) => {
+  const whereCondition: any = {};
+
+  if (currentUser?.role === 'POOL_MANAGER') {
+    if (!currentUser.locationId) {
+      throw new AppError(
+        403,
+        'Akses ditolak: Akun manajer tidak terikat ke lokasi kolam.',
+      );
+    }
+
+    const loc = await prisma.location.findUnique({
+      where: { id: currentUser.locationId },
+      select: { name: true },
+    });
+
+    if (!loc) {
+      throw new AppError(404, 'Data lokasi kolam manajer tidak ditemukan.');
+    }
+
+    whereCondition.locationName = loc.name;
+  }
+
   const attendances = await prisma.attendance.findMany({
+    where: whereCondition,
     orderBy: { date: 'desc' },
     take: 100,
   });

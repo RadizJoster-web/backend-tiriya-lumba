@@ -2,6 +2,7 @@ import { prisma } from '../../config/prisma';
 import { AppError } from '../../utils/appError';
 import { CurrentUserPayload } from './get';
 import { revalidateVercelTags } from '../../utils/revalidateWebhook';
+import { validateStudentCapacityAndClash } from './studentCapacityGuard';
 
 export const approveRegistrationService = async (
   id: string,
@@ -35,6 +36,43 @@ export const approveRegistrationService = async (
     }
   }
 
+  // Jika pendaftaran murid, validasi ulang ketersediaan kuota dan slot pelatih
+  if (registration.type === 'NEW_STUDENT') {
+    if (
+      !registration.instructorId ||
+      !registration.locationId ||
+      !registration.firstMeetDate ||
+      !registration.firstMeetSession ||
+      !registration.packageId
+    ) {
+      throw new AppError(
+        400,
+        'Data pendaftaran murid tidak lengkap (instruktur/lokasi/jadwal/paket kosong).',
+      );
+    }
+
+    const [pkg, instructor] = await Promise.all([
+      prisma.package.findUnique({ where: { id: registration.packageId } }),
+      prisma.user.findFirst({
+        where: { id: registration.instructorId, role: 'INSTRUCTOR' },
+        select: { fullName: true },
+      }),
+    ]);
+
+    if (!pkg) throw new AppError(404, 'Data paket les tidak ditemukan.');
+    if (!instructor) throw new AppError(404, 'Data pelatih tidak ditemukan.');
+
+    await validateStudentCapacityAndClash({
+      userId: registration.userId,
+      instructorId: registration.instructorId,
+      instructorName: instructor.fullName,
+      locationId: registration.locationId,
+      firstMeetDate: registration.firstMeetDate.toISOString().slice(0, 10),
+      firstMeetSession: registration.firstMeetSession,
+      packageType: pkg.type,
+    });
+  }
+
   await prisma.$transaction(async (tx) => {
     await tx.registration.update({
       where: { id },
@@ -61,14 +99,14 @@ export const approveRegistrationService = async (
         },
       });
 
-      let activeSessions = 4;
+      let sessionCountToAdd = 4;
       if (registration.packageId) {
         const pkg = await tx.package.findUnique({
           where: { id: registration.packageId },
           select: { sessionCount: true },
         });
         if (pkg?.sessionCount && pkg.sessionCount > 0) {
-          activeSessions = Math.min(pkg.sessionCount, 10);
+          sessionCountToAdd = pkg.sessionCount;
         }
       }
 
@@ -79,7 +117,9 @@ export const approveRegistrationService = async (
       if (studentProfile) {
         await tx.studentProfile.update({
           where: { userId: registration.userId },
-          data: { activeSessions },
+          data: {
+            activeSessions: (studentProfile.activeSessions || 0) + sessionCountToAdd,
+          },
         });
       }
     }
