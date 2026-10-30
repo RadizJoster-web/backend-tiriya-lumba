@@ -1,4 +1,5 @@
-import { S3Client, PutObjectCommand } from '@aws-sdk/client-s3';
+import { S3Client, PutObjectCommand, GetObjectCommand } from '@aws-sdk/client-s3';
+import { Readable } from 'stream';
 import path from 'path';
 import { AppError } from './appError';
 
@@ -10,7 +11,7 @@ const publicUrl = (process.env.R2_PUBLIC_URL || '').replace(/\/+$/, '');
 
 let s3ClientInstance: S3Client | null = null;
 
-function getS3Client(): S3Client {
+export function getS3Client(): S3Client {
   if (!s3ClientInstance) {
     if (!accountId || !accessKeyId || !secretAccessKey) {
       throw new AppError(500, 'Konfigurasi Cloudflare R2 belum lengkap di environment variable.');
@@ -25,6 +26,15 @@ function getS3Client(): S3Client {
     });
   }
   return s3ClientInstance;
+}
+
+export function normalizeR2Url(url?: string | null): string | null {
+  if (!url) return null;
+  if (url.includes('.r2.cloudflarestorage.com/')) {
+    const fileKey = url.split('.r2.cloudflarestorage.com/')[1];
+    return `/api/files/${fileKey}`;
+  }
+  return url;
 }
 
 export async function uploadToR2(
@@ -49,5 +59,29 @@ export async function uploadToR2(
     }),
   );
 
+  if (!publicUrl || publicUrl.includes('r2.cloudflarestorage.com')) {
+    return `/api/files/${fileKey}`;
+  }
+
   return `${publicUrl}/${fileKey}`;
+}
+
+export async function getFileFromR2(fileKey: string): Promise<{
+  stream: Readable;
+  contentType?: string;
+  contentLength?: number;
+}> {
+  const client = getS3Client();
+  const res = await client.send(
+    new GetObjectCommand({
+      Bucket: bucketName,
+      Key: fileKey,
+    }),
+  );
+
+  return {
+    stream: res.Body as Readable,
+    contentType: res.ContentType,
+    contentLength: res.ContentLength,
+  };
 }

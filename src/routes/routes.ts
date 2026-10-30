@@ -15,6 +15,7 @@ import studentRoutes from './studentRoutes';
 import attendanceRoutes from './attendanceRoutes';
 import dashboardRoutes from './dashboardRoutes';
 import statsRoutes from './statsRoutes';
+import fileRoutes from './fileRoutes';
 
 // Routes
 rootRouter.use('/auth', authRoutes);
@@ -26,6 +27,7 @@ rootRouter.use('/pool-managers', poolManagerRoutes);
 rootRouter.use('/instructor', instructorRoutes);
 rootRouter.use('/instructors', instructorRoutes);
 rootRouter.use('/upload-file', uploadRoutes);
+rootRouter.use('/files', fileRoutes);
 rootRouter.use('/register', registerRoutes);
 rootRouter.use('/registrations', registerRoutes);
 rootRouter.use('/siswa', studentRoutes);

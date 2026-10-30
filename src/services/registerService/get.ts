@@ -1,5 +1,6 @@
 import { prisma } from '../../config/prisma';
 import { AppError } from '../../utils/appError';
+import { normalizeR2Url } from '../../utils/r2Storage';
 
 export interface CurrentUserPayload {
   role?: string;
@@ -96,9 +97,9 @@ export const getRegistrationsService = async (
       phone: user?.phone ?? null,
       lokasi: locationLabel,
       birthDate: studentProfile?.birthDate ?? instructorBirthDate ?? null,
-      profilePictureUrl: user?.profilePictureUrl ?? null,
-      cvUrl: reg.cvUrl ?? null,
-      paymentProofUrl: reg.paymentProofUrl ?? null,
+      profilePictureUrl: normalizeR2Url(user?.profilePictureUrl),
+      cvUrl: normalizeR2Url(reg.cvUrl),
+      paymentProofUrl: normalizeR2Url(reg.paymentProofUrl),
       rejectionReason: reg.rejectionReason ?? null,
       createdAt: reg.createdAt
         ? reg.createdAt.toISOString()

@@ -1,6 +1,7 @@
 import { prisma } from '../../config/prisma';
 import { AppError } from '../../utils/appError';
 import { CurrentUserPayload } from './get';
+import { normalizeR2Url } from '../../utils/r2Storage';
 
 export const getRegistrationByIdService = async (
   id: string,
@@ -64,9 +65,18 @@ export const getRegistrationByIdService = async (
         : [],
     ]);
 
+  const sanitizedUser = user
+    ? {
+        ...user,
+        profilePictureUrl: normalizeR2Url(user.profilePictureUrl),
+      }
+    : null;
+
   return {
     ...registration,
-    user,
+    cvUrl: normalizeR2Url(registration.cvUrl),
+    paymentProofUrl: normalizeR2Url(registration.paymentProofUrl),
+    user: sanitizedUser,
     schedules,
     package: packageData,
     location,
