@@ -6,6 +6,9 @@ import { AppError } from '../utils/appError';
 const ALLOWED_IMAGE_EXTS = ['.jpg', '.jpeg', '.png', '.webp'];
 const ALLOWED_DOC_EXTS = ['.pdf'];
 
+// Batas payload Vercel Serverless Function adalah 4.5 MB
+const MAX_UPLOAD_SIZE = 4.5 * 1024 * 1024;
+
 const storage = multer.memoryStorage();
 
 const fileFilter = (
@@ -38,7 +41,7 @@ export const upload = multer({
   storage,
   fileFilter,
   limits: {
-    fileSize: 10 * 1024 * 1024, // Maksimal 10 MB (CV)
+    fileSize: MAX_UPLOAD_SIZE,
   },
 });
 
@@ -74,14 +77,14 @@ export const validateMagicBytesMiddleware = (
     const files = filesMap[fieldname] || [];
     const isCv = fieldname === 'cv';
     const expectedType = isCv ? 'pdf' : 'image';
-    const maxSize = isCv ? 10 * 1024 * 1024 : 5 * 1024 * 1024;
 
     for (const file of files) {
-      if (file.size > maxSize) {
+      if (file.size > MAX_UPLOAD_SIZE) {
+        const sizeMb = (file.size / (1024 * 1024)).toFixed(1);
         return next(
           new AppError(
-            400,
-            `Ukuran berkas '${file.originalname}' melebihi batas ${isCv ? '10 MB' : '5 MB'}.`,
+            413,
+            `Ukuran berkas '${file.originalname}' (${sizeMb} MB) melebihi batas maksimal 4.5 MB.`,
           ),
         );
       }

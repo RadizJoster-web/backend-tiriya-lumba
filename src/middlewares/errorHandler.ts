@@ -4,38 +4,48 @@ import multer from 'multer';
 
 export const errorHandler = (
   err: any,
-  req: Request,
+  _req: Request,
   res: Response,
-  next: NextFunction,
+  _next: NextFunction,
 ) => {
   console.error('[ERROR]: ', err);
 
-  let statusCode = err.statusCode || 500;
+  let statusCode = err.statusCode || err.status || 500;
   let errMessage = err.message || 'Terjadi kesalahan internal pada server';
+
+  // Handle Multer errors (misal: LIMIT_FILE_SIZE)
+  if (err instanceof multer.MulterError || err.name === 'MulterError') {
+    if (err.code === 'LIMIT_FILE_SIZE') {
+      statusCode = 413;
+      errMessage = 'Ukuran berkas terlalu besar. Batas maksimal yang diizinkan adalah 4.5 MB.';
+    } else {
+      statusCode = 400;
+      errMessage = `Terjadi kendala pada berkas unggahan: ${err.message}`;
+    }
+  }
+
+  // Handle HTTP 413 Content Too Large
+  if (err.status === 413 || err.statusCode === 413 || err.type === 'entity.too.large') {
+    statusCode = 413;
+    errMessage = 'Ukuran berkas atau konten yang dikirimkan terlalu besar (maksimal 4.5 MB).';
+  }
 
   // Validasi Prisma Error
   if (err instanceof Prisma.PrismaClientKnownRequestError) {
     switch (err.code) {
-      // Unique constraint failed (misal: email duplikat)
       case 'P2002':
-        statusCode = 400;
+        statusCode = 409;
         const target = (err.meta?.target as string[])?.join(', ') || 'data';
-        errMessage = `Gagal! Field '${target}' sudah digunakan, Gunakan data lain`;
+        errMessage = `Gagal! Field '${target}' sudah digunakan, gunakan data lain`;
         break;
-      // Record not found
       case 'P2025':
         statusCode = 404;
         errMessage = 'Data yang anda cari tidak ditemukan di database';
         break;
-      // Foreign Key constraint failed
       case 'P2003':
         statusCode = 400;
-        errMessage =
-          'Gagal menyimpan data karena relasi data terkait tidak valid';
+        errMessage = 'Gagal menyimpan data karena relasi data terkait tidak valid';
         break;
-      case 'P2002':
-        statusCode = 409;
-        errMessage = 'Data lokasi dengan nama dan area tersebut sudah ada';
       default:
         statusCode = 400;
         errMessage = `Database Error: Kode ${err.code}`;
@@ -46,42 +56,13 @@ export const errorHandler = (
   // Validasi Zod Error
   if (err.name === 'ZodError') {
     statusCode = 400;
-    errMessage = err.issues[0].message || 'Data input tidak valid';
-    return res.status(statusCode).json({
-      success: false,
-      message: errMessage,
-    });
+    errMessage = err.issues?.[0]?.message || 'Data input tidak valid';
   }
 
-  // Balasan respon JSON yang aman dan konsisten ke Klien (Stack trace tidak dibocorkan ke client)
+  // Balasan respon JSON yang konsisten ke klien
   return res.status(statusCode).json({
     success: false,
+    message: errMessage,
     errMessage,
   });
-};
-
-export const errorMulterHandler = (
-  err: any,
-  req: Request,
-  res: Response,
-  next: NextFunction,
-) => {
-  if (err instanceof multer.MulterError) {
-    if (err.code === 'LIMIT_FILE_SIZE') {
-      return res.status(400).json({
-        success: false,
-        message: 'Ukuran file terlalu besar. Maksimal 5 MB.',
-      });
-    }
-    return res.status(400).json({
-      success: false,
-      message: `Upload error: ${err.message}`,
-    });
-  } else if (err) {
-    return res.status(400).json({
-      success: false,
-      message: err.message,
-    });
-  }
-  next();
 };
