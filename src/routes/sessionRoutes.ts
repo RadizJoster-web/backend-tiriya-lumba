@@ -1,7 +1,7 @@
 // src/routes/sessionRoutes.ts
 import { Router } from 'express';
 import { authMiddleware, authorize } from '../middlewares/authMiddleware';
-import { cachePublicCdn } from '../middlewares/cacheControl';
+import { realTimeNoCache } from '../middlewares/cacheControl';
 
 import { getSessions } from '../controllers/sessionController/get';
 import { getSessionById } from '../controllers/sessionController/getById';
@@ -11,9 +11,9 @@ import { deleteSession } from '../controllers/sessionController/delete';
 
 const router = Router();
 
-// Rute Publik (Tier 1: Vercel CDN Cache untuk melihat pilihan sesi)
-router.get('/', cachePublicCdn, getSessions);
-router.get('/:id', cachePublicCdn, getSessionById);
+// Rute Publik (Sesi jam latihan bersifat dinamis & real-time)
+router.get('/', realTimeNoCache, getSessions);
+router.get('/:id', realTimeNoCache, getSessionById);
 
 // Rute Terproteksi (Hanya Admin & Pool Manager yang dapat mengelola jam sesi)
 router.post(

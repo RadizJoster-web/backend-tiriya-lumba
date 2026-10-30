@@ -26,11 +26,10 @@ export const createSessionSchema = z.object({
 
 export const getSessionFilterSchema = z.object({
   locationId: z
-    .string({ message: 'Location ID wajib diisi' })
-    .uuid({ message: 'Format Location ID harus berupa UUID' }),
-  dayOfWeek: z
-    .string({ message: 'Hari wajib diisi' })
-    .min(1, { message: 'Hari tidak boleh kosong' }),
+    .string()
+    .uuid({ message: 'Format Location ID harus berupa UUID' })
+    .optional(),
+  dayOfWeek: z.string().min(1).optional(),
 });
 
 export const updateSessionSchema = createSessionSchema.partial();
