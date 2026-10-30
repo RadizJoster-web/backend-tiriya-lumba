@@ -7,7 +7,7 @@ export const uploadStudentPayment = async (
   next: NextFunction,
 ) => {
   try {
-    const data = processStudentPaymentUpload(req.files as any);
+    const data = await processStudentPaymentUpload(req.files as any);
     return res.status(200).json({
       success: true,
       message: 'Upload bukti pembayaran berhasil.',

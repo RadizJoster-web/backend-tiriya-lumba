@@ -1,7 +1,11 @@
 import { prisma } from '../../config/prisma';
 import { AppError } from '../../utils/appError';
 import { rescheduleInputSchema } from './instructorSchema';
-import { ONE_MONTH_MS, DAYS_ID } from './getRescheduleStatus';
+import { ONE_MONTH_MS } from './getRescheduleStatus';
+import {
+  findActiveStudentSchedules,
+  validateRetainedSchedules,
+} from './rescheduleGuard';
 
 export const rescheduleScheduleService = async (
   userId: string,
@@ -10,12 +14,8 @@ export const rescheduleScheduleService = async (
   const user = await prisma.user.findUnique({
     where: { id: userId },
     include: {
-      instructorProfile: {
-        include: { locations: true },
-      },
-      schedules: {
-        include: { location: true },
-      },
+      instructorProfile: { include: { locations: true } },
+      schedules: { include: { location: true } },
     },
   });
 
@@ -31,11 +31,7 @@ export const rescheduleScheduleService = async (
   if (lastTime && now - lastTime < ONE_MONTH_MS) {
     const resetDate = new Date(lastTime + ONE_MONTH_MS).toLocaleDateString(
       'id-ID',
-      {
-        day: 'numeric',
-        month: 'long',
-        year: 'numeric',
-      },
+      { day: 'numeric', month: 'long', year: 'numeric' },
     );
     throw new AppError(
       400,
@@ -45,16 +41,13 @@ export const rescheduleScheduleService = async (
 
   const { schedules: newSchedules } = rescheduleInputSchema.parse(body);
 
-  // Ambil pendaftaran murid aktif dengan sisa pertemuan > 0
   const activeRegistrations = await prisma.registration.findMany({
     where: {
       instructorId: userId,
       status: 'APPROVED',
       type: 'NEW_STUDENT',
       user: {
-        studentProfile: {
-          activeSessions: { gt: 0 },
-        },
+        studentProfile: { activeSessions: { gt: 0 } },
       },
     },
     select: {
@@ -64,39 +57,12 @@ export const rescheduleScheduleService = async (
     },
   });
 
-  // Tentukan jadwal yang memiliki murid (dari model Schedule atau Registration)
-  const activeStudentSchedules = user.schedules.filter((s) => {
-    if (s.studentId !== null) return true;
-    return activeRegistrations.some((reg) => {
-      if (!reg.firstMeetDate) return false;
-      const d = new Date(reg.firstMeetDate);
-      const dayName = DAYS_ID[d.getDay()];
-      return (
-        reg.locationId === s.locationId &&
-        reg.firstMeetSession?.trim().toLowerCase() ===
-          s.sessionName.trim().toLowerCase() &&
-        dayName?.trim().toLowerCase() === s.dayOfWeek.trim().toLowerCase()
-      );
-    });
-  });
+  const activeStudentSchedules = findActiveStudentSchedules(
+    user.schedules,
+    activeRegistrations,
+  );
 
-  for (const activeSchedule of activeStudentSchedules) {
-    const isRetained = newSchedules.some(
-      (ns) =>
-        ns.locationId === activeSchedule.locationId &&
-        ns.dayOfWeek.trim().toLowerCase() ===
-          activeSchedule.dayOfWeek.trim().toLowerCase() &&
-        ns.sessionName.trim().toLowerCase() ===
-          activeSchedule.sessionName.trim().toLowerCase(),
-    );
-
-    if (!isRetained) {
-      throw new AppError(
-        400,
-        `Tidak dapat menghapus sesi ${activeSchedule.dayOfWeek} (${activeSchedule.sessionName}) di ${activeSchedule.location?.name ?? 'Kolam'} karena ada murid aktif yang sedang dijadwalkan pada sesi tersebut.`,
-      );
-    }
-  }
+  validateRetainedSchedules(activeStudentSchedules, newSchedules);
 
   const uniqueLocationIds = Array.from(
     new Set(newSchedules.map((s) => s.locationId)),
@@ -114,7 +80,6 @@ export const rescheduleScheduleService = async (
   }
 
   await prisma.$transaction(async (tx) => {
-    // Hanya hapus slot yang tidak memiliki murid aktif
     const protectedScheduleIds = activeStudentSchedules.map((s) => s.id);
 
     await tx.schedule.deleteMany({
@@ -128,10 +93,8 @@ export const rescheduleScheduleService = async (
       return !activeStudentSchedules.some(
         (as) =>
           as.locationId === ns.locationId &&
-          as.dayOfWeek.trim().toLowerCase() ===
-            ns.dayOfWeek.trim().toLowerCase() &&
-          as.sessionName.trim().toLowerCase() ===
-            ns.sessionName.trim().toLowerCase(),
+          as.dayOfWeek.trim().toLowerCase() === ns.dayOfWeek.trim().toLowerCase() &&
+          as.sessionName.trim().toLowerCase() === ns.sessionName.trim().toLowerCase(),
       );
     });
 

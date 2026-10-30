@@ -9,13 +9,15 @@
     "build": "tsc",
     "start": "node index.js",
     "prisma": "prisma",
-    "postinstall": "prisma skills sync || exit 0"
+    "postinstall": "prisma generate",
+    "vercel-build": "prisma generate && tsc"
   },
   "keywords": [],
   "author": "",
   "license": "ISC",
   "type": "commonjs",
   "dependencies": {
+    "@aws-sdk/client-s3": "^3.1160.0",
     "@prisma/client": "^6.4.0",
     "@types/cookie-parser": "^1.4.10",
     "bcrypt": "^6.0.0",

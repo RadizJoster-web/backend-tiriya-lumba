@@ -7,7 +7,7 @@ export const uploadStudentProfile = async (
   next: NextFunction,
 ) => {
   try {
-    const data = processStudentProfileUpload(req.files as any);
+    const data = await processStudentProfileUpload(req.files as any);
     return res.status(200).json({
       success: true,
       message: 'Upload profile berhasil.',
