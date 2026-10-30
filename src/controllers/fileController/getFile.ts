@@ -3,8 +3,11 @@ import { getFileFromR2 } from '../../utils/r2Storage';
 
 export const getFile = async (req: Request, res: Response) => {
   try {
-    const rawKey = req.params[0] || `${req.params.folder}/${req.params.filename}`;
-    const fileKey = decodeURIComponent(rawKey).replace(/^\/+/, '');
+    const params = req.params as Record<string, string | undefined>;
+    const rawKey =
+      params.path ||
+      (params.folder && params.filename ? `${params.folder}/${params.filename}` : '');
+    const fileKey = decodeURIComponent(rawKey || '').replace(/^\/+/, '');
 
     if (!fileKey) {
       return res.status(400).json({ success: false, message: 'Nama berkas tidak valid.' });

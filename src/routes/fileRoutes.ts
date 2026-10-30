@@ -3,8 +3,8 @@ import { getFile } from '../controllers/fileController/getFile';
 
 const router = Router();
 
-// Mendukung format /api/files/:folder/:filename maupun /api/files/*
+// Express 5 format: /:folder/:filename dan fallback /{*path}
 router.get('/:folder/:filename', getFile);
-router.get('/*', getFile);
+router.get('/{*path}', getFile);
 
 export default router;
