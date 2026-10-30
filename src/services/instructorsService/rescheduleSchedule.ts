@@ -6,6 +6,7 @@ import {
   findActiveStudentSchedules,
   validateRetainedSchedules,
 } from './rescheduleGuard';
+import { runTransactionWithRetry } from '../../utils/prismaTransaction';
 
 export const rescheduleScheduleService = async (
   userId: string,
@@ -79,7 +80,7 @@ export const rescheduleScheduleService = async (
     );
   }
 
-  await prisma.$transaction(async (tx) => {
+  await runTransactionWithRetry(async (tx) => {
     const protectedScheduleIds = activeStudentSchedules.map((s) => s.id);
 
     await tx.schedule.deleteMany({

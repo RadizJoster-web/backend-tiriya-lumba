@@ -46,6 +46,11 @@ export const errorHandler = (
         statusCode = 400;
         errMessage = 'Gagal menyimpan data karena relasi data terkait tidak valid';
         break;
+      case 'P2028':
+      case 'P2024':
+        statusCode = 503;
+        errMessage = 'Koneksi transaksi database sedang sibuk. Silakan coba kembali sesaat lagi.';
+        break;
       default:
         statusCode = 400;
         errMessage = `Database Error: Kode ${err.code}`;

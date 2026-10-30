@@ -1,6 +1,7 @@
 import { prisma } from '../../config/prisma';
 import { AppError } from '../../utils/appError';
 import { registerInstructorSchema } from './registerSchema';
+import { runTransactionWithRetry } from '../../utils/prismaTransaction';
 
 export const registerInstructorService = async (
   userId: string,
@@ -20,15 +21,9 @@ export const registerInstructorService = async (
     },
   });
 
-  if (!existingUser) {
-    throw new AppError(404, 'Pengguna tidak ditemukan.');
-  }
-
+  if (!existingUser) throw new AppError(404, 'Pengguna tidak ditemukan.');
   if (existingUser.role === 'INSTRUCTOR') {
-    throw new AppError(
-      400,
-      'Anda sudah terdaftar sebagai instruktur aktif.',
-    );
+    throw new AppError(400, 'Anda sudah terdaftar sebagai instruktur aktif.');
   }
 
   const latestInstructorReg = existingUser.registrations?.[0];
@@ -55,7 +50,7 @@ export const registerInstructorService = async (
     );
   }
 
-  const result = await prisma.$transaction(async (tx) => {
+  const result = await runTransactionWithRetry(async (tx) => {
     const updatedUser = await tx.user.update({
       where: { id: userId },
       data: {
@@ -89,10 +84,7 @@ export const registerInstructorService = async (
     });
 
     await tx.schedule.deleteMany({
-      where: {
-        instructorId: userId,
-        studentId: null,
-      },
+      where: { instructorId: userId, studentId: null },
     });
 
     await tx.schedule.createMany({

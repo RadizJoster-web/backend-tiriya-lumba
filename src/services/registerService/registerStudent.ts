@@ -2,26 +2,31 @@ import { prisma } from '../../config/prisma';
 import { AppError } from '../../utils/appError';
 import { registerStudentSchema } from './registerSchema';
 import { validateStudentCapacityAndClash } from './studentCapacityGuard';
+import { runTransactionWithRetry } from '../../utils/prismaTransaction';
 
 export const registerStudentService = async (userId: string, body: unknown) => {
   const data = registerStudentSchema.parse(body);
 
-  const existingUser = await prisma.user.findUnique({
-    where: { id: userId },
-    include: {
-      studentProfile: true,
-      registrations: {
-        where: { type: 'NEW_STUDENT' },
-        orderBy: { id: 'desc' },
-        take: 1,
+  const [existingUser, location, packageData, instructor] = await Promise.all([
+    prisma.user.findUnique({
+      where: { id: userId },
+      include: {
+        studentProfile: true,
+        registrations: {
+          where: { type: 'NEW_STUDENT' },
+          orderBy: { id: 'desc' },
+          take: 1,
+        },
       },
-    },
-  });
+    }),
+    prisma.location.findUnique({ where: { id: data.locationId } }),
+    prisma.package.findUnique({ where: { id: data.packageId } }),
+    prisma.user.findFirst({
+      where: { id: data.instructorId, role: 'INSTRUCTOR' },
+    }),
+  ]);
 
-  if (!existingUser) {
-    throw new AppError(404, 'Pengguna tidak ditemukan.');
-  }
-
+  if (!existingUser) throw new AppError(404, 'Pengguna tidak ditemukan.');
   if (
     existingUser.role === 'STUDENT' &&
     (existingUser.studentProfile?.activeSessions ?? 0) > 0
@@ -40,14 +45,6 @@ export const registerStudentService = async (userId: string, body: unknown) => {
     );
   }
 
-  const [location, packageData, instructor] = await Promise.all([
-    prisma.location.findUnique({ where: { id: data.locationId } }),
-    prisma.package.findUnique({ where: { id: data.packageId } }),
-    prisma.user.findFirst({
-      where: { id: data.instructorId, role: 'INSTRUCTOR' },
-    }),
-  ]);
-
   if (!location) throw new AppError(404, 'Lokasi tidak ditemukan');
   if (!packageData) throw new AppError(404, 'Paket tidak ditemukan');
   if (!instructor) throw new AppError(404, 'Instruktur tidak ditemukan');
@@ -62,7 +59,7 @@ export const registerStudentService = async (userId: string, body: unknown) => {
     packageType: packageData.type,
   });
 
-  const result = await prisma.$transaction(async (tx) => {
+  const result = await runTransactionWithRetry(async (tx) => {
     const updatedUser = await tx.user.update({
       where: { id: userId },
       data: {

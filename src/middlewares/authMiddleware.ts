@@ -1,6 +1,7 @@
 import { Request, Response, NextFunction } from 'express';
 import { prisma } from '../config/prisma';
 import jwt from 'jsonwebtoken';
+export { authorize } from './authorize';
 
 interface JwtPayload {
   userId: string;
@@ -8,6 +9,15 @@ interface JwtPayload {
   role: 'ADMIN' | 'POOL_MANAGER' | 'INSTRUCTOR' | 'STUDENT' | 'USER';
   locationId?: string | null;
 }
+
+const USER_SELECT = {
+  id: true,
+  email: true,
+  role: true,
+  isActive: true,
+  isVerified: true,
+  locationId: true,
+} as const;
 
 export const authMiddleware = async (
   req: Request,
@@ -18,18 +28,16 @@ export const authMiddleware = async (
     let headerToken: string | undefined;
     let cookieToken: string | undefined;
 
-    // 1. Ekstrak token dari Authorization Header (Bearer) dan Cookie
-    if (
-      req.headers.authorization &&
-      req.headers.authorization.startsWith('Bearer ')
-    ) {
+    if (req.headers.authorization?.startsWith('Bearer ')) {
       headerToken = req.headers.authorization.split(' ')[1];
     }
-    if (req.cookies && req.cookies.access_token) {
+    if (req.cookies?.access_token) {
       cookieToken = req.cookies.access_token;
     }
 
-    const candidates = [headerToken, cookieToken].filter(Boolean) as string[];
+    const candidates = [headerToken, cookieToken].filter(
+      (t): t is string => Boolean(t) && t !== 'undefined' && t !== 'null',
+    );
 
     if (candidates.length === 0) {
       return res.status(401).json({
@@ -38,7 +46,6 @@ export const authMiddleware = async (
       });
     }
 
-    // 2. Dekode & Verifikasi JWT (coba kandidat token)
     const secret = process.env.JWT_SECRET;
     if (!secret) {
       throw new Error('FATAL: JWT_SECRET environment variable is not defined.');
@@ -62,8 +69,7 @@ export const authMiddleware = async (
       if (lastError?.name === 'TokenExpiredError') {
         return res.status(401).json({
           success: false,
-          message:
-            'Sesi Anda telah berakhir (Token Expired). Silakan login kembali.',
+          message: 'Sesi Anda telah berakhir (Token Expired). Silakan login kembali.',
         });
       }
       return res.status(401).json({
@@ -72,27 +78,40 @@ export const authMiddleware = async (
       });
     }
 
-    // 3. Query efisien ke DB dengan Select
-    const user = await prisma.user.findFirst({
-      where: { id: decoded.userId },
-      select: {
-        id: true,
-        email: true,
-        role: true,
-        isActive: true,
-        isVerified: true,
-        locationId: true,
-      },
-    });
-
-    if (!user || !user.isActive || !user.isVerified) {
-      return res.status(401).json({
-        success: false,
-        message: 'Sesi Anda tidak valid atau akun telah nonaktif.',
+    // Query DB via PK dengan toleransi retry sesaat untuk TiDB Serverless
+    let user = null;
+    try {
+      user = await prisma.user.findUnique({
+        where: { id: decoded.userId },
+        select: USER_SELECT,
+      });
+    } catch {
+      await new Promise((r) => setTimeout(r, 200));
+      user = await prisma.user.findUnique({
+        where: { id: decoded.userId },
+        select: USER_SELECT,
       });
     }
 
-    // 4. Set ke req.user tanpa error TS
+    if (!user) {
+      return res.status(401).json({
+        success: false,
+        message: 'Akun pengguna tidak ditemukan. Silakan login kembali.',
+      });
+    }
+    if (!user.isActive) {
+      return res.status(403).json({
+        success: false,
+        message: 'Akun Anda telah dinonaktifkan. Silakan hubungi admin.',
+      });
+    }
+    if (!user.isVerified) {
+      return res.status(403).json({
+        success: false,
+        message: 'Akun Anda belum diverifikasi. Silakan verifikasi email Anda.',
+      });
+    }
+
     req.user = {
       userId: user.id,
       email: user.email,
@@ -105,26 +124,20 @@ export const authMiddleware = async (
     if (error.name === 'TokenExpiredError') {
       return res.status(401).json({
         success: false,
-        message:
-          'Sesi Anda telah berakhir (Token Expired). Silakan login kembali.',
+        message: 'Sesi Anda telah berakhir (Token Expired). Silakan login kembali.',
+      });
+    }
+    if (error.name === 'JsonWebTokenError') {
+      return res.status(401).json({
+        success: false,
+        message: 'Token autentikasi tidak valid.',
       });
     }
 
-    return res.status(401).json({
+    console.error('[AuthMiddleware Unexpected/DB Error]:', error);
+    return res.status(503).json({
       success: false,
-      message: 'Token autentikasi tidak valid.',
+      message: 'Koneksi ke database sedang sibuk. Silakan coba kembali beberapa saat lagi.',
     });
   }
-};
-
-export const authorize = (...roles: string[]) => {
-  return (req: Request, res: Response, next: NextFunction) => {
-    if (!req.user || !roles.includes(req.user.role)) {
-      return res.status(403).json({
-        success: false,
-        message: 'Akses terlarang. Anda tidak memiliki izin untuk tindakan ini.',
-      });
-    }
-    next();
-  };
 };

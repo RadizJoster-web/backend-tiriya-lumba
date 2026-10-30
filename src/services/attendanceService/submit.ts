@@ -5,6 +5,7 @@ import {
   CurrentUserPayload,
   processAttendanceRecord,
 } from './submitRowHelper';
+import { runTransactionWithRetry } from '../../utils/prismaTransaction';
 
 export { AttendanceRowInput, CurrentUserPayload };
 
@@ -42,7 +43,7 @@ export const submitAttendanceService = async (
   const startOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 0, 0, 0, 0);
   const endOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 23, 59, 59, 999);
 
-  await prisma.$transaction(async (tx) => {
+  await runTransactionWithRetry(async (tx) => {
     for (const row of rows) {
       await processAttendanceRecord(
         tx,

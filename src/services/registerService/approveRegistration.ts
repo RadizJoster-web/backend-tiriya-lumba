@@ -3,6 +3,7 @@ import { AppError } from '../../utils/appError';
 import { CurrentUserPayload } from './get';
 import { revalidateVercelTags } from '../../utils/revalidateWebhook';
 import { validateStudentCapacityAndClash } from './studentCapacityGuard';
+import { runTransactionWithRetry } from '../../utils/prismaTransaction';
 
 export const approveRegistrationService = async (
   id: string,
@@ -17,26 +18,24 @@ export const approveRegistrationService = async (
     throw new AppError(404, 'Data pendaftaran tidak ditemukan.');
   }
 
-  if (registration.status === 'APPROVED') {
-    throw new AppError(400, 'Pendaftaran ini sudah disetujui sebelumnya.');
+  if (registration.status !== 'PENDING') {
+    throw new AppError(
+      400,
+      `Pendaftaran sudah dalam status ${registration.status}.`,
+    );
   }
 
-  if (currentUser.role === 'POOL_MANAGER') {
-    if (registration.type !== 'NEW_STUDENT') {
-      throw new AppError(
-        403,
-        'Pengelola kolam hanya memiliki izin menyetujui pendaftaran murid.',
-      );
-    }
-    if (registration.locationId !== currentUser.locationId) {
-      throw new AppError(
-        403,
-        'Anda tidak memiliki hak akses untuk menyetujui pendaftaran di kolam ini.',
-      );
-    }
+  if (
+    currentUser.role === 'POOL_MANAGER' &&
+    currentUser.locationId &&
+    registration.locationId !== currentUser.locationId
+  ) {
+    throw new AppError(
+      403,
+      'Akses ditolak. Anda hanya dapat menyetujui pendaftaran di lokasi kolam Anda.',
+    );
   }
 
-  // Jika pendaftaran murid, validasi ulang ketersediaan kuota dan slot pelatih
   if (registration.type === 'NEW_STUDENT') {
     if (
       !registration.instructorId ||
@@ -47,7 +46,7 @@ export const approveRegistrationService = async (
     ) {
       throw new AppError(
         400,
-        'Data pendaftaran murid tidak lengkap (instruktur/lokasi/jadwal/paket kosong).',
+        'Data pendaftaran murid tidak lengkap untuk diverifikasi.',
       );
     }
 
@@ -55,12 +54,11 @@ export const approveRegistrationService = async (
       prisma.package.findUnique({ where: { id: registration.packageId } }),
       prisma.user.findFirst({
         where: { id: registration.instructorId, role: 'INSTRUCTOR' },
-        select: { fullName: true },
       }),
     ]);
 
-    if (!pkg) throw new AppError(404, 'Data paket les tidak ditemukan.');
-    if (!instructor) throw new AppError(404, 'Data pelatih tidak ditemukan.');
+    if (!pkg) throw new AppError(404, 'Paket tidak ditemukan.');
+    if (!instructor) throw new AppError(404, 'Instruktur tidak ditemukan.');
 
     await validateStudentCapacityAndClash({
       userId: registration.userId,
@@ -73,7 +71,7 @@ export const approveRegistrationService = async (
     });
   }
 
-  await prisma.$transaction(async (tx) => {
+  await runTransactionWithRetry(async (tx) => {
     await tx.registration.update({
       where: { id },
       data: {
