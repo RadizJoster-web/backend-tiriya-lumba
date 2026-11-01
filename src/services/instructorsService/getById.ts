@@ -38,19 +38,54 @@ export const getInstructorByIdForManagementService = async (
     ];
   }
 
+  // Gunakan select eksplisit untuk memangkas payload & mencegah kebocoran password/token
   const instructor = await prisma.user.findFirst({
     where: whereCondition,
-    include: {
+    select: {
+      id: true,
+      fullName: true,
+      phone: true,
+      email: true,
+      role: true,
+      isVerified: true,
+      profilePictureUrl: true,
+      locationId: true,
+      isActive: true,
       instructorProfile: {
-        include: { locations: true },
+        select: {
+          id: true,
+          userId: true,
+          shortBio: true,
+          birthDate: true,
+          license: true,
+          experience: true,
+          lastRescheduledAt: true,
+          locations: {
+            select: { id: true, name: true, category: true },
+          },
+        },
       },
       schedules: {
-        include: { location: true },
+        select: {
+          id: true,
+          dayOfWeek: true,
+          sessionName: true,
+          locationId: true,
+          location: {
+            select: { id: true, name: true },
+          },
+        },
       },
       registrations: {
         where: { type: 'NEW_INSTRUCTOR' },
         orderBy: { createdAt: 'desc' },
         take: 1,
+        select: {
+          id: true,
+          status: true,
+          cvUrl: true,
+          createdAt: true,
+        },
       },
     },
   });

@@ -9,40 +9,47 @@ export const getAvailableInstructorsService = async (query: unknown) => {
   const { locationId, dayOfWeek, sessionName, packageType } =
     getAvailableInstructorsQuerySchema.parse(query);
 
-  const instructors = await prisma.user.findMany({
-    where: {
-      role: 'INSTRUCTOR',
-      isActive: true,
-      instructorProfile: {
-        locations: {
-          some: { id: locationId },
+  // Paralelkan pengambilan instruktur dan daftar paket
+  const [instructors, packages] = await Promise.all([
+    prisma.user.findMany({
+      where: {
+        role: 'INSTRUCTOR',
+        isActive: true,
+        instructorProfile: {
+          locations: {
+            some: { id: locationId },
+          },
+        },
+        schedules: {
+          some: {
+            locationId,
+            dayOfWeek,
+            sessionName,
+          },
         },
       },
-      schedules: {
-        some: {
-          locationId,
-          dayOfWeek,
-          sessionName,
+      select: {
+        id: true,
+        fullName: true,
+        profilePictureUrl: true,
+        instructorProfile: {
+          select: {
+            experience: true,
+            license: true,
+            shortBio: true,
+          },
         },
       },
-    },
-    select: {
-      id: true,
-      fullName: true,
-      profilePictureUrl: true,
-      instructorProfile: {
-        select: {
-          experience: true,
-          license: true,
-          shortBio: true,
-        },
-      },
-    },
-  });
+    }),
+    prisma.package.findMany({
+      select: { id: true, type: true },
+    }),
+  ]);
 
-  const packages = await prisma.package.findMany({
-    select: { id: true, type: true },
-  });
+  if (instructors.length === 0) {
+    return [];
+  }
+
   const packageTypeMap = new Map(
     packages.map((p) => [p.id, p.type.trim().toUpperCase()]),
   );

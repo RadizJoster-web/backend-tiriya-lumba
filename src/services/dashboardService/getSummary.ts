@@ -32,57 +32,48 @@ export const getDashboardSummaryService = async (
   }
   const locationId = isPoolManager ? currentUser.locationId ?? undefined : undefined;
 
-  // 1. Total Siswa Aktif
-  let totalSiswa = 0;
-  if (locationId) {
-    totalSiswa = await prisma.registration.count({
-      where: {
-        type: 'NEW_STUDENT',
-        status: 'APPROVED',
-        locationId,
-        user: {
-          studentProfile: {
-            activeSessions: { gt: 0 },
-          },
-        },
-      },
-    });
-  } else {
-    totalSiswa = await prisma.studentProfile.count({
-      where: {
-        activeSessions: { gt: 0 },
-      },
-    });
-  }
-
-  // 2. Total Pelatih Aktif
-  let totalGuru = 0;
-  if (locationId) {
-    totalGuru = await prisma.user.count({
-      where: {
-        role: 'INSTRUCTOR',
-        isActive: true,
-        instructorProfile: {
-          locations: {
-            some: { id: locationId },
-          },
-        },
-      },
-    });
-  } else {
-    totalGuru = await prisma.user.count({
-      where: {
-        role: 'INSTRUCTOR',
-        isActive: true,
-      },
-    });
-  }
-
-  // 3. Registrasi pada tahun terpilih
   const startOfYear = new Date(`${year}-01-01T00:00:00.000Z`);
   const endOfYear = new Date(`${year}-12-31T23:59:59.999Z`);
 
-  const yearRegistrations = await prisma.registration.findMany({
+  const studentCountPromise = locationId
+    ? prisma.registration.count({
+        where: {
+          type: 'NEW_STUDENT',
+          status: 'APPROVED',
+          locationId,
+          user: {
+            studentProfile: {
+              activeSessions: { gt: 0 },
+            },
+          },
+        },
+      })
+    : prisma.studentProfile.count({
+        where: {
+          activeSessions: { gt: 0 },
+        },
+      });
+
+  const instructorCountPromise = locationId
+    ? prisma.user.count({
+        where: {
+          role: 'INSTRUCTOR',
+          isActive: true,
+          instructorProfile: {
+            locations: {
+              some: { id: locationId },
+            },
+          },
+        },
+      })
+    : prisma.user.count({
+        where: {
+          role: 'INSTRUCTOR',
+          isActive: true,
+        },
+      });
+
+  const registrationsPromise = prisma.registration.findMany({
     where: {
       createdAt: {
         gte: startOfYear,
@@ -94,6 +85,13 @@ export const getDashboardSummaryService = async (
       createdAt: true,
     },
   });
+
+  // Paralel query untuk mengeliminasi network waterfall roundtrips
+  const [totalSiswa, totalGuru, yearRegistrations] = await Promise.all([
+    studentCountPromise,
+    instructorCountPromise,
+    registrationsPromise,
+  ]);
 
   let chartData;
   if (monthQuery === 'ALL') {

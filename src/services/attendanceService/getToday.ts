@@ -19,42 +19,62 @@ export const getAttendanceTodayService = async (
     locationId = currentUser.locationId ?? undefined;
   }
 
-  // 1. Jadwal pelatih hari ini
-  const instructorSchedules = await prisma.schedule.findMany({
-    where: {
-      dayOfWeek: todayName,
-      ...(locationId ? { locationId } : {}),
-    },
-    include: {
-      instructor: {
-        select: { id: true, fullName: true, isActive: true },
+  // 1. Eksekusi 4 query database secara paralel dengan Promise.all
+  const [
+    instructorSchedules,
+    studentRegistrations,
+    locations,
+    existingAttendances,
+  ] = await Promise.all([
+    prisma.schedule.findMany({
+      where: {
+        dayOfWeek: todayName,
+        ...(locationId ? { locationId } : {}),
       },
-      location: {
-        select: { id: true, name: true },
-      },
-    },
-  });
-
-  // 2. Murid aktif hari ini
-  const studentRegistrations = await prisma.registration.findMany({
-    where: {
-      type: 'NEW_STUDENT',
-      status: 'APPROVED',
-      ...(locationId ? { locationId } : {}),
-    },
-    include: {
-      user: {
-        select: {
-          id: true,
-          fullName: true,
-          isActive: true,
-          studentProfile: true,
+      include: {
+        instructor: {
+          select: { id: true, fullName: true, isActive: true },
+        },
+        location: {
+          select: { id: true, name: true },
         },
       },
-    },
-  });
+    }),
+    prisma.registration.findMany({
+      where: {
+        type: 'NEW_STUDENT',
+        status: 'APPROVED',
+        ...(locationId ? { locationId } : {}),
+      },
+      include: {
+        user: {
+          select: {
+            id: true,
+            fullName: true,
+            isActive: true,
+            studentProfile: true,
+          },
+        },
+      },
+    }),
+    prisma.location.findMany({
+      select: { id: true, name: true },
+    }),
+    prisma.attendance.findMany({
+      where: {
+        date: {
+          gte: new Date(`${todayDateStr}T00:00:00.000Z`),
+          lte: new Date(`${todayDateStr}T23:59:59.999Z`),
+        },
+      },
+      select: {
+        role: true,
+        name: true,
+        status: true,
+      },
+    }),
+  ]);
 
-  const locations = await prisma.location.findMany();
   const locationMap = new Map(locations.map((l) => [l.id, l.name]));
 
   const matchingStudents = studentRegistrations.filter((reg) => {
@@ -62,16 +82,6 @@ export const getAttendanceTodayService = async (
     const meetDate = new Date(reg.firstMeetDate);
     const meetDay = DAYS_ID[meetDate.getDay()];
     return meetDay === todayName;
-  });
-
-  // 3. Absensi yang sudah tercatat
-  const existingAttendances = await prisma.attendance.findMany({
-    where: {
-      date: {
-        gte: new Date(`${todayDateStr}T00:00:00.000Z`),
-        lte: new Date(`${todayDateStr}T23:59:59.999Z`),
-      },
-    },
   });
 
   const attendanceStatusMap = new Map(

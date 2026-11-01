@@ -27,20 +27,36 @@ export const getStudentsService = async (currentUser?: CurrentUserPayload) => {
     };
   }
 
-  const students = await prisma.user.findMany({
-    where: whereClause,
-    include: {
-      studentProfile: true,
-      registrations: {
-        where: { type: 'NEW_STUDENT', status: 'APPROVED' },
-        orderBy: { createdAt: 'desc' },
-        take: 1,
+  // Paralelkan pengambilan students, locations, dan packages
+  const [students, locations, packages] = await Promise.all([
+    prisma.user.findMany({
+      where: whereClause,
+      select: {
+        id: true,
+        fullName: true,
+        phone: true,
+        isActive: true,
+        profilePictureUrl: true,
+        studentProfile: {
+          select: {
+            fullName: true,
+            birthDate: true,
+          },
+        },
+        registrations: {
+          where: { type: 'NEW_STUDENT', status: 'APPROVED' },
+          orderBy: { createdAt: 'desc' },
+          take: 1,
+          select: {
+            locationId: true,
+            packageId: true,
+            firstMeetDate: true,
+            createdAt: true,
+          },
+        },
       },
-    },
-    orderBy: { fullName: 'asc' },
-  });
-
-  const [locations, packages] = await Promise.all([
+      orderBy: { fullName: 'asc' },
+    }),
     prisma.location.findMany({ select: { id: true, name: true } }),
     prisma.package.findMany({ select: { id: true, type: true } }),
   ]);

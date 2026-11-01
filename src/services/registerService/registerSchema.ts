@@ -26,10 +26,11 @@ export const registerStudentSchema = z.object({
     .max(20)
     .regex(/^[0-9+() -]+$/, { message: 'Format nomor telepon tidak valid' }),
   email: z
-    .string({ message: 'Email wajib diisi' })
+    .string()
     .trim()
     .email('Format email tidak valid')
-    .max(100),
+    .max(100)
+    .optional(),
   schoolOrOffice: z
     .string({
       message: 'Sekolah atau kantor wajib diisi',

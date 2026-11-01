@@ -37,38 +37,41 @@ export const getRegistrationsService = async (
     whereCondition.locationId = currentUser.locationId;
   }
 
-  const registrations = await prisma.registration.findMany({
-    where: whereCondition,
-    orderBy: { createdAt: 'desc' },
-    include: {
-      user: {
-        select: {
-          fullName: true,
-          email: true,
-          phone: true,
-          profilePictureUrl: true,
-          studentProfile: {
-            select: {
-              fullName: true,
-              birthDate: true,
+  // Paralelkan pengambilan pendaftaran dan daftar lokasi
+  const [registrations, locations] = await Promise.all([
+    prisma.registration.findMany({
+      where: whereCondition,
+      orderBy: { createdAt: 'desc' },
+      include: {
+        user: {
+          select: {
+            fullName: true,
+            email: true,
+            phone: true,
+            profilePictureUrl: true,
+            studentProfile: {
+              select: {
+                fullName: true,
+                birthDate: true,
+              },
             },
-          },
-          instructorProfile: {
-            select: {
-              birthDate: true,
-              locations: {
-                select: { id: true, name: true },
+            instructorProfile: {
+              select: {
+                birthDate: true,
+                locations: {
+                  select: { id: true, name: true },
+                },
               },
             },
           },
         },
       },
-    },
-  });
+    }),
+    prisma.location.findMany({
+      select: { id: true, name: true },
+    }),
+  ]);
 
-  const locations = await prisma.location.findMany({
-    select: { id: true, name: true },
-  });
   const locationMap = new Map(locations.map((l) => [l.id, l.name]));
 
   return registrations.map((reg) => {

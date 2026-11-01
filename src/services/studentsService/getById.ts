@@ -27,23 +27,54 @@ export const getStudentByIdService = async (
     };
   }
 
-  const user = await prisma.user.findFirst({
-    where: whereClause,
-    include: {
-      studentProfile: {
-        include: {
-          attendances: {
-            orderBy: { date: 'desc' },
-            take: 10,
+  // Paralelkan pengambilan detail student, locations, dan packages
+  const [user, locations, packages] = await Promise.all([
+    prisma.user.findFirst({
+      where: whereClause,
+      select: {
+        id: true,
+        fullName: true,
+        email: true,
+        phone: true,
+        isActive: true,
+        isVerified: true,
+        profilePictureUrl: true,
+        studentProfile: {
+          select: {
+            id: true,
+            fullName: true,
+            birthPlace: true,
+            birthDate: true,
+            gender: true,
+            address: true,
+            schoolOrOffice: true,
+            tshirtSize: true,
+            activeSessions: true,
+            attendances: {
+              orderBy: { date: 'desc' },
+              take: 10,
+            },
+          },
+        },
+        registrations: {
+          orderBy: { createdAt: 'desc' },
+          take: 5,
+          select: {
+            id: true,
+            type: true,
+            status: true,
+            firstMeetDate: true,
+            firstMeetSession: true,
+            locationId: true,
+            packageId: true,
+            createdAt: true,
           },
         },
       },
-      registrations: {
-        orderBy: { createdAt: 'desc' },
-        take: 5,
-      },
-    },
-  });
+    }),
+    prisma.location.findMany({ select: { id: true, name: true } }),
+    prisma.package.findMany({ select: { id: true, type: true } }),
+  ]);
 
   if (!user) {
     throw new AppError(
@@ -54,11 +85,6 @@ export const getStudentByIdService = async (
 
   const profile = user.studentProfile;
   const latestReg = user.registrations?.[0];
-
-  const [locations, packages] = await Promise.all([
-    prisma.location.findMany({ select: { id: true, name: true } }),
-    prisma.package.findMany({ select: { id: true, type: true } }),
-  ]);
 
   const locationMap = new Map(locations.map((l) => [l.id, l.name]));
   const packageMap = new Map(packages.map((p) => [p.id, p.type]));
@@ -90,20 +116,7 @@ export const getStudentByIdService = async (
     lokasi: locationName,
     paket: packageName,
     berlakuSd,
-    studentProfile: profile
-      ? {
-          id: profile.id,
-          fullName: profile.fullName,
-          birthPlace: profile.birthPlace,
-          birthDate: profile.birthDate,
-          gender: profile.gender,
-          address: profile.address,
-          schoolOrOffice: profile.schoolOrOffice,
-          tshirtSize: profile.tshirtSize,
-          activeSessions: profile.activeSessions,
-          attendances: profile.attendances,
-        }
-      : null,
+    studentProfile: profile ?? null,
     registrations: user.registrations.map((r) => ({
       id: r.id,
       type: r.type,
