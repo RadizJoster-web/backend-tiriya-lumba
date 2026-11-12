@@ -11,10 +11,11 @@
 Backend PT Tirya Lumba melayani seluruh kebutuhan data bagi dua aplikasi klien: **Frontend Landing Page (Next.js)** dan **Frontend Dasbor Admin (React Vite)**.
 
 - **Bahasa & Runtime:** Node.js (v20+ / v24+), TypeScript, Express.js.
-- **ORM & Basis Data:** Prisma ORM, MySQL Database (`db_tirya_lumba`).
+- **Infrastruktur & Serverless Region:** Vercel Serverless Function (Region `sin1` - Singapura).
+- **ORM & Basis Data:** Prisma ORM, TiDB Cloud Serverless MySQL (Cluster AWS Singapore `ap-southeast-1` / `tirya_lumba`).
 - **Autentikasi & Keamanan:** JSON Web Token (JWT), Bcrypt password hashing, Helmet, CORS, Express Rate Limit.
-- **Validasi Data:** Zod schema validation.
-- **Penanganan File Upload:** Multer (penyimpanan lokal ke `/public/uploads`).
+- **Validasi Data:** Zod schema validation & Magic Bytes Buffer validation.
+- **Penyimpanan Media & Dokumen:** Cloudflare R2 Object Storage (S3-Compatible API via `@aws-sdk/client-s3`) dengan Multer in-memory stream parser (`multer.memoryStorage()`).
 - **Port Layanan:** `http://localhost:5000` (Base API: `/api`).
 
 ---
@@ -223,10 +224,15 @@ Diterapkan pada endpoint pencarian pelatih ([`getAvailableInstructors.ts`](file:
    - Menyematkan data user (`userId`, `email`, `role`, `locationId`) ke `req.user`.
 2. **`authorize(...roles)`:**
    - Memeriksa apakah `req.user.role` termasuk dalam peran yang diizinkan untuk rute tersebut.
-3. **`uploadMiddleware` (Multer):**
-   - Membatasi ukuran file pas foto dan bukti bayar maksimal 5 MB (format JPG, PNG, WEBP).
-   - Membatasi ukuran dokumen CV pelatih maksimal 10 MB (format PDF).
-4. **`rateLimiter`:**
+3. **`uploadMiddleware` (Multer Memory Storage) & `validateMagicBytesMiddleware`:**
+   - Menggunakan `multer.memoryStorage()` untuk memproses stream upload di memori tanpa penyimpanan filesystem lokal yang bersifat ephemeral di serverless.
+   - Membatasi ukuran berkas maksimal **4.5 MB** per berkas (mengikuti batas maksimum payload Vercel Serverless Function).
+   - Memvalidasi MIME type dan ekstensi format berkas: gambar (`.jpg`, `.jpeg`, `.png`, `.webp`) dan dokumen CV (`.pdf`).
+   - Melakukan inspeksi header biner (*magic bytes*): `%PDF` untuk PDF, `0xFF 0xD8 0xFF` untuk JPEG, `0x89 0x50 0x4E 0x47` untuk PNG, dan `RIFF...WEBP` untuk WebP guna mencegah celah keamanan MIME spoofing.
+4. **Modul Penyimpanan Awan (`r2Storage`):**
+   - Mengunggah buffer biner terverifikasi ke **Cloudflare R2 Object Storage** via `@aws-sdk/client-s3` ke folder bucket `profiles/`, `payments/`, atau `cvs/`.
+   - Menyediakan reverse-proxy streaming via `getFileFromR2` dengan header caching publik (`Cache-Control: public, max-age=86400, stale-while-revalidate=604800`) dan `Content-Disposition: inline`.
+5. **`rateLimiter`:**
    - Membatasi request publik maksimal 100 request per 15 menit per alamat IP.
 
 ---
@@ -268,3 +274,8 @@ Diterapkan pada endpoint pencarian pelatih ([`getAvailableInstructors.ts`](file:
 | `/api/attendances/my-history` | `GET` | Auth (STUDENT, USER) | `attendanceController/index.ts` |
 | `/api/attendances` | `GET`, `POST` | ADMIN, POOL_MANAGER | `attendanceController/index.ts` |
 | `/api/dashboard/summary` | `GET` | ADMIN, POOL_MANAGER | `dashboardController/index.ts` |
+| `/api/upload-file/student/profile` | `POST` | Auth (USER, STUDENT) | `uploadController/uploadStudentProfile.ts` |
+| `/api/upload-file/student/payment` | `POST` | Auth (USER, STUDENT) | `uploadController/uploadStudentPayment.ts` |
+| `/api/upload-file/instructor/cv` | `POST` | Auth (USER, INSTRUCTOR) | `uploadController/uploadInstructorCv.ts` |
+| `/api/upload-file/instructor/profile` | `POST` | Auth (USER, INSTRUCTOR) | `uploadController/uploadInstructorProfile.ts` |
+| `/api/files/:folder/:filename` | `GET` | Public | `fileController/getFile.ts` |

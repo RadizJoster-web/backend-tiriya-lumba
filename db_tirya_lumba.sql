@@ -28,8 +28,8 @@ SET time_zone = "+00:00";
 --
 
 CREATE TABLE `area` (
-  `id` varchar(191) NOT NULL,
-  `name` varchar(191) NOT NULL
+  `id` varchar(36) NOT NULL,
+  `name` varchar(100) NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 --
@@ -48,14 +48,14 @@ INSERT INTO `area` (`id`, `name`) VALUES
 --
 
 CREATE TABLE `attendance` (
-  `id` varchar(191) NOT NULL,
-  `studentProfileId` varchar(191) DEFAULT NULL,
+  `id` varchar(36) NOT NULL,
+  `studentProfileId` varchar(36) DEFAULT NULL,
   `date` datetime(3) NOT NULL DEFAULT current_timestamp(3),
-  `status` varchar(191) NOT NULL,
-  `instructorId` varchar(191) DEFAULT NULL,
-  `locationName` varchar(191) NOT NULL,
-  `name` varchar(191) NOT NULL,
-  `role` varchar(191) NOT NULL DEFAULT 'Murid'
+  `status` varchar(30) NOT NULL,
+  `instructorId` varchar(36) DEFAULT NULL,
+  `locationName` varchar(100) NOT NULL,
+  `name` varchar(100) NOT NULL,
+  `role` varchar(30) NOT NULL DEFAULT 'Murid'
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 --
@@ -73,11 +73,11 @@ INSERT INTO `attendance` (`id`, `studentProfileId`, `date`, `status`, `instructo
 --
 
 CREATE TABLE `instructorprofile` (
-  `id` varchar(191) NOT NULL,
-  `userId` varchar(191) NOT NULL,
+  `id` varchar(36) NOT NULL,
+  `userId` varchar(36) NOT NULL,
   `shortBio` text DEFAULT NULL,
   `license` text DEFAULT NULL,
-  `experience` varchar(191) DEFAULT NULL,
+  `experience` varchar(100) DEFAULT NULL,
   `birthDate` datetime(3) NOT NULL,
   `lastRescheduledAt` datetime(3) DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
@@ -97,11 +97,11 @@ INSERT INTO `instructorprofile` (`id`, `userId`, `shortBio`, `license`, `experie
 --
 
 CREATE TABLE `location` (
-  `id` varchar(191) NOT NULL,
-  `name` varchar(191) NOT NULL,
-  `category` varchar(191) NOT NULL,
-  `mapUrl` varchar(191) DEFAULT NULL,
-  `areaId` varchar(191) DEFAULT NULL
+  `id` varchar(36) NOT NULL,
+  `name` varchar(100) NOT NULL,
+  `category` varchar(50) NOT NULL,
+  `mapUrl` varchar(100) DEFAULT NULL,
+  `areaId` varchar(36) DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 --
@@ -124,9 +124,9 @@ INSERT INTO `location` (`id`, `name`, `category`, `mapUrl`, `areaId`) VALUES
 --
 
 CREATE TABLE `package` (
-  `id` varchar(191) NOT NULL,
-  `locationId` varchar(191) NOT NULL,
-  `type` varchar(191) NOT NULL,
+  `id` varchar(36) NOT NULL,
+  `locationId` varchar(36) NOT NULL,
+  `type` varchar(50) NOT NULL,
   `price` double NOT NULL,
   `sessionCount` int(11) NOT NULL DEFAULT 4
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
@@ -148,19 +148,19 @@ INSERT INTO `package` (`id`, `locationId`, `type`, `price`, `sessionCount`) VALU
 --
 
 CREATE TABLE `registration` (
-  `id` varchar(191) NOT NULL,
-  `userId` varchar(191) NOT NULL,
+  `id` varchar(36) NOT NULL,
+  `userId` varchar(36) NOT NULL,
   `type` enum('NEW_STUDENT','NEW_INSTRUCTOR','RENEWAL') NOT NULL,
   `status` enum('PENDING','APPROVED','REJECTED') NOT NULL DEFAULT 'PENDING',
-  `rejectionReason` varchar(191) DEFAULT NULL,
-  `packageId` varchar(191) DEFAULT NULL,
-  `locationId` varchar(191) DEFAULT NULL,
-  `instructorId` varchar(191) DEFAULT NULL,
+  `rejectionReason` varchar(255) DEFAULT NULL,
+  `packageId` varchar(36) DEFAULT NULL,
+  `locationId` varchar(36) DEFAULT NULL,
+  `instructorId` varchar(36) DEFAULT NULL,
   `firstMeetDate` datetime(3) DEFAULT NULL,
-  `firstMeetSession` varchar(191) DEFAULT NULL,
+  `firstMeetSession` varchar(50) DEFAULT NULL,
   `paymentMethod` enum('QRIS','BANK_TRANSFER','CASH') DEFAULT NULL,
-  `paymentProofUrl` varchar(191) DEFAULT NULL,
-  `cvUrl` varchar(191) DEFAULT NULL,
+  `paymentProofUrl` varchar(255) DEFAULT NULL,
+  `cvUrl` varchar(255) DEFAULT NULL,
   `createdAt` datetime(3) NOT NULL DEFAULT current_timestamp(3),
   `updatedAt` datetime(3) NOT NULL DEFAULT current_timestamp(3)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
@@ -183,12 +183,12 @@ INSERT INTO `registration` (`id`, `userId`, `type`, `status`, `rejectionReason`,
 --
 
 CREATE TABLE `schedule` (
-  `id` varchar(191) NOT NULL,
-  `instructorId` varchar(191) NOT NULL,
-  `studentId` varchar(191) DEFAULT NULL,
-  `dayOfWeek` varchar(191) NOT NULL,
-  `sessionName` varchar(191) NOT NULL,
-  `locationId` varchar(191) NOT NULL
+  `id` varchar(36) NOT NULL,
+  `instructorId` varchar(36) NOT NULL,
+  `studentId` varchar(36) DEFAULT NULL,
+  `dayOfWeek` varchar(15) NOT NULL,
+  `sessionName` varchar(50) NOT NULL,
+  `locationId` varchar(36) NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 --
@@ -215,12 +215,12 @@ INSERT INTO `schedule` (`id`, `instructorId`, `studentId`, `dayOfWeek`, `session
 --
 
 CREATE TABLE `sessiontime` (
-  `id` varchar(191) NOT NULL,
-  `dayOfWeek` varchar(191) NOT NULL,
-  `sessionName` varchar(191) NOT NULL,
-  `startTime` varchar(191) NOT NULL,
-  `endTime` varchar(191) NOT NULL,
-  `locationId` varchar(191) DEFAULT NULL
+  `id` varchar(36) NOT NULL,
+  `dayOfWeek` varchar(15) NOT NULL,
+  `sessionName` varchar(50) NOT NULL,
+  `startTime` varchar(10) NOT NULL,
+  `endTime` varchar(10) NOT NULL,
+  `locationId` varchar(36) DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 --
@@ -257,16 +257,16 @@ INSERT INTO `sessiontime` (`id`, `dayOfWeek`, `sessionName`, `startTime`, `endTi
 --
 
 CREATE TABLE `studentprofile` (
-  `id` varchar(191) NOT NULL,
-  `userId` varchar(191) NOT NULL,
-  `birthPlace` varchar(191) NOT NULL,
+  `id` varchar(36) NOT NULL,
+  `userId` varchar(36) NOT NULL,
+  `birthPlace` varchar(50) NOT NULL,
   `birthDate` datetime(3) NOT NULL,
-  `gender` varchar(191) NOT NULL,
-  `address` varchar(191) NOT NULL,
-  `schoolOrOffice` varchar(191) NOT NULL,
-  `tshirtSize` varchar(191) NOT NULL,
+  `gender` varchar(20) NOT NULL,
+  `address` varchar(255) NOT NULL,
+  `schoolOrOffice` varchar(100) NOT NULL,
+  `tshirtSize` varchar(10) NOT NULL,
   `activeSessions` int(11) NOT NULL DEFAULT 0,
-  `fullName` varchar(191) NOT NULL
+  `fullName` varchar(100) NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 --
@@ -285,19 +285,19 @@ INSERT INTO `studentprofile` (`id`, `userId`, `birthPlace`, `birthDate`, `gender
 --
 
 CREATE TABLE `user` (
-  `id` varchar(191) NOT NULL,
-  `email` varchar(191) NOT NULL,
-  `password` varchar(191) NOT NULL,
+  `id` varchar(36) NOT NULL,
+  `email` varchar(100) NOT NULL,
+  `password` varchar(100) NOT NULL,
   `role` enum('ADMIN','POOL_MANAGER','INSTRUCTOR','STUDENT','USER') NOT NULL DEFAULT 'USER',
-  `profilePictureUrl` varchar(191) DEFAULT NULL,
-  `locationId` varchar(191) DEFAULT NULL,
+  `profilePictureUrl` varchar(255) DEFAULT NULL,
+  `locationId` varchar(36) DEFAULT NULL,
   `isActive` tinyint(1) NOT NULL DEFAULT 1,
   `isVerified` tinyint(1) NOT NULL DEFAULT 0,
-  `otpCode` varchar(191) DEFAULT NULL,
+  `otpCode` varchar(10) DEFAULT NULL,
   `otpExpiresAt` datetime(3) DEFAULT NULL,
-  `fullName` varchar(191) NOT NULL,
-  `phone` varchar(191) DEFAULT NULL,
-  `resetToken` varchar(191) DEFAULT NULL,
+  `fullName` varchar(100) NOT NULL,
+  `phone` varchar(20) DEFAULT NULL,
+  `resetToken` varchar(255) DEFAULT NULL,
   `resetTokenExpiresAt` datetime(3) DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
@@ -322,8 +322,8 @@ INSERT INTO `user` (`id`, `email`, `password`, `role`, `profilePictureUrl`, `loc
 --
 
 CREATE TABLE `_instructorlocations` (
-  `A` varchar(191) NOT NULL,
-  `B` varchar(191) NOT NULL
+  `A` varchar(36) NOT NULL,
+  `B` varchar(36) NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 --

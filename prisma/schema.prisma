@@ -42,19 +42,19 @@ enum RegistrationType {
 // ==========================================
 
 model User {
-  id                String             @id @default(uuid())
-  fullName          String
-  phone             String?
-  email             String             @unique
-  password          String
+  id                String             @id @default(uuid()) @db.VarChar(36)
+  fullName          String             @db.VarChar(100)
+  phone             String?            @db.VarChar(20)
+  email             String             @unique @db.VarChar(100)
+  password          String             @db.VarChar(255)
   role              Role               @default(USER)
-  otpCode           String?
+  otpCode           String?            @db.VarChar(10)
   otpExpiresAt      DateTime?
-  resetToken        String?
+  resetToken        String?            @db.VarChar(255)
   resetTokenExpiresAt DateTime?
   isVerified        Boolean            @default(false)
-  profilePictureUrl String?
-  locationId        String?
+  profilePictureUrl String?            @db.VarChar(255)
+  locationId        String?            @db.VarChar(36)
   location          Location?          @relation(fields: [locationId], references: [id])
   isActive          Boolean            @default(true)
   studentProfile    StudentProfile?
@@ -67,17 +67,17 @@ model User {
 }
 
 model Area {
-  id        String     @id @default(uuid())
-  name      String     @unique // Contoh: "Tangerang Selatan", "Jakarta Selatan", "Bintaro"
+  id        String     @id @default(uuid()) @db.VarChar(36)
+  name      String     @unique @db.VarChar(100) // Contoh: "Tangerang Selatan", "Jakarta Selatan", "Bintaro"
   locations Location[] // Relasi: 1 Area menampung banyak Kolam (Location)
 }
 
 model Location {
-  id       String    @id @default(uuid())
-  name     String // Contoh: "Kolam Renang Graha Raya"
-  category String // Kerjasama Tangerang, Non-Kerjasama, dll.
-  mapUrl   String?
-  areaId   String? // Menyimpan UUID dari tabel Area
+  id       String    @id @default(uuid()) @db.VarChar(36)
+  name     String    @db.VarChar(100) // Contoh: "Kolam Renang Graha Raya"
+  category String    @db.VarChar(50) // Kerjasama Tangerang, Non-Kerjasama, dll.
+  mapUrl   String?   @db.Text
+  areaId   String?   @db.VarChar(36) // Menyimpan UUID dari tabel Area
   area     Area?     @relation(fields: [areaId], references: [id])
   packages Package[]
 
@@ -92,9 +92,9 @@ model Location {
 }
 
 model Package {
-  id           String   @id @default(uuid())
-  locationId   String
-  type         String // Reguler, Privat, Prestasi, Ekskul
+  id           String   @id @default(uuid()) @db.VarChar(36)
+  locationId   String   @db.VarChar(36)
+  type         String   @db.VarChar(50) // Reguler, Privat, Prestasi, Ekskul
   price        Float
   sessionCount Int      @default(4) // Jumlah pertemuan per paket (1 - 10)
   location     Location @relation(fields: [locationId], references: [id])
@@ -103,60 +103,60 @@ model Package {
 }
 
 model SessionTime {
-  id          String  @id @default(uuid())
-  dayOfWeek   String // Senin, Selasa, dll.
-  sessionName String // Sesi 1
-  startTime   String // "09:00"
-  endTime     String // "10:00"
-  locationId  String? // Jika null, berlaku global. Jika terisi, spesifik kolam.
+  id          String  @id @default(uuid()) @db.VarChar(36)
+  dayOfWeek   String  @db.VarChar(15) // Senin, Selasa, dll.
+  sessionName String  @db.VarChar(50) // Sesi 1
+  startTime   String  @db.VarChar(10) // "09:00"
+  endTime     String  @db.VarChar(10) // "10:00"
+  locationId  String? @db.VarChar(36) // Jika null, berlaku global. Jika terisi, spesifik kolam.
 }
 
 model StudentProfile {
-  id             String       @id @default(uuid())
-  userId         String       @unique
-  fullName       String // Nama lengkap murid / anak yang ikut les 
-  birthPlace     String
+  id             String       @id @default(uuid()) @db.VarChar(36)
+  userId         String       @unique @db.VarChar(36)
+  fullName       String       @db.VarChar(100) // Nama lengkap murid / anak yang ikut les 
+  birthPlace     String       @db.VarChar(50)
   birthDate      DateTime
-  gender         String
-  address        String
-  schoolOrOffice String
-  tshirtSize     String // XS, S, M, L, XL, XXL
+  gender         String       @db.VarChar(20)
+  address        String       @db.VarChar(255)
+  schoolOrOffice String       @db.VarChar(100)
+  tshirtSize     String       @db.VarChar(10) // XS, S, M, L, XL, XXL
   activeSessions Int          @default(0)
   user           User         @relation(fields: [userId], references: [id], onDelete: Cascade)
   attendances    Attendance[]
 }
 
 model InstructorProfile {
-  id                String     @id @default(uuid())
-  userId            String     @unique
+  id                String     @id @default(uuid()) @db.VarChar(36)
+  userId            String     @unique @db.VarChar(36)
   user              User       @relation(fields: [userId], references: [id], onDelete: Cascade)
   shortBio          String?    @db.Text
   birthDate         DateTime   
   license           String?    @db.Text
-  experience        String?
+  experience        String?    @db.VarChar(100)
   locations         Location[] @relation("InstructorLocations")
   lastRescheduledAt DateTime?
 }
 
 model Registration {
-  id              String             @id @default(uuid())
-  userId          String
+  id              String             @id @default(uuid()) @db.VarChar(36)
+  userId          String             @db.VarChar(36)
   user            User               @relation(fields: [userId], references: [id], onDelete: Cascade)
   type            RegistrationType
   status          RegistrationStatus @default(PENDING)
-  rejectionReason String?
+  rejectionReason String?            @db.VarChar(255)
 
   // Data Pendaftaran Murid (Booking)
-  packageId        String?
-  locationId       String?
-  instructorId     String?
+  packageId        String?           @db.VarChar(36)
+  locationId       String?           @db.VarChar(36)
+  instructorId     String?           @db.VarChar(36)
   firstMeetDate    DateTime?
-  firstMeetSession String?
+  firstMeetSession String?           @db.VarChar(50)
 
   // Data Pembayaran & File
   paymentMethod   PaymentMethod?
-  paymentProofUrl String?
-  cvUrl           String?
+  paymentProofUrl String?            @db.VarChar(255)
+  cvUrl           String?            @db.VarChar(255)
   createdAt       DateTime           @default(now())
   updatedAt       DateTime           @default(now()) @updatedAt
 
@@ -168,13 +168,13 @@ model Registration {
 }
 
 model Schedule {
-  id           String   @id @default(uuid())
-  instructorId String
+  id           String   @id @default(uuid()) @db.VarChar(36)
+  instructorId String   @db.VarChar(36)
   instructor   User     @relation("InstructorSchedules", fields: [instructorId], references: [id])
-  studentId    String?
-  dayOfWeek    String
-  sessionName  String
-  locationId   String
+  studentId    String?  @db.VarChar(36)
+  dayOfWeek    String   @db.VarChar(15)
+  sessionName  String   @db.VarChar(50)
+  locationId   String   @db.VarChar(36)
   location     Location @relation(fields: [locationId], references: [id])
 
   @@index([locationId, dayOfWeek, sessionName])
@@ -183,14 +183,14 @@ model Schedule {
 }
 
 model Attendance {
-  id               String          @id @default(uuid())
-  studentProfileId String?
-  instructorId     String?
-  role             String          @default("Murid") // "Murid" / "Pelatih"
-  name             String
-  locationName     String
+  id               String          @id @default(uuid()) @db.VarChar(36)
+  studentProfileId String?         @db.VarChar(36)
+  instructorId     String?         @db.VarChar(36)
+  role             String          @default("Murid") @db.VarChar(30) // "Murid" / "Pelatih"
+  name             String          @db.VarChar(100)
+  locationName     String          @db.VarChar(100)
   date             DateTime        @default(now())
-  status           String          // "Hadir" / "Tidak Hadir"
+  status           String          @db.VarChar(30) // "Hadir" / "Tidak Hadir"
   studentProfile   StudentProfile? @relation(fields: [studentProfileId], references: [id])
 
   @@index([date])

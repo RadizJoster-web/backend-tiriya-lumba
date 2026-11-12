@@ -12,9 +12,9 @@ Dokumentasi resmi arsitektur REST API, kontrak _request/response_, skema autenti
   - **Helmet:** Proteksi security headers dan _Cross-Origin Resource Policy_ diaktifkan untuk aset gambar publik.
   - **CORS:** Dibatasi untuk klien Landing Page (`http://localhost:3000`) dan Dasbor Admin (`http://localhost:5173`).
   - **Rate Limiter:** Global Rate Limiting aktif pada seluruh endpoint API (100 request per 15 menit per IP).
-  - **Static Directories:**
-    - `/public` -> Melayani aset statis publik (`http://localhost:5000/public/...`).
-    - `/uploads` -> Melayani file hasil unggahan Multer (`http://localhost:5000/uploads/...`).
+  - **Penyimpanan Media & Berkas:**
+    - Di-host menggunakan **Cloudflare R2 Object Storage** via `@aws-sdk/client-s3`.
+    - Disajikan secara aman melalui reverse proxy streaming: `/api/files/:folder/:filename`.
 
 ### Mekanisme Autentikasi & Sesi
 
@@ -769,7 +769,7 @@ Modul ini mengelola paket les renang (misal: Reguler, Privat, Prestasi) dan nomi
   "locationId": "a898fd3b-7fee-4479-b5f7-19624b25d614",
   "type": "Reguler",
   "price": 350000,
-  "meetCount": 4
+  "sessionCount": 4
 }
 ```
 
@@ -1529,17 +1529,17 @@ Modul ini menangani pencarian ketersediaan instruktur berdasarkan kuota jadwal m
 
 ## 9. Modul Unggah File (File Uploads)
 
-Modul ini menangani upload file statis secara lokal menggunakan Multer sebelum data pendaftaran di-submit ke sistem.
+Modul ini menangani upload berkas media (pas foto, bukti pembayaran, CV pelatih) ke **Cloudflare R2 Object Storage** secara serverless. Multer digunakan sebagai stream parser di memori (`memoryStorage`) tanpa menyimpan ke disk lokal. Seluruh endpoint unggah berkas mewajibkan otorisasi pengguna (`authMiddleware`).
 
-- **Batas Maksimal Ukuran File:** 5 MB
-- **Format Gambar yang Diizinkan:** JPG, JPEG, PNG, WEBP
-- **Format Dokumen CV yang Diizinkan:** PDF
+- **Batas Maksimal Ukuran File:** 4.5 MB (Batas payload Vercel Serverless Function)
+- **Format Gambar yang Diizinkan:** JPG, JPEG, PNG, WEBP (dengan validasi *magic bytes*)
+- **Format Dokumen CV yang Diizinkan:** PDF (dengan validasi *magic bytes* `%PDF`)
 
 ### 9.1 Upload Foto Profil Siswa
 
-- **Endpoint:** `POST /api/upload-file/student/profil`
-- **Authentikasi:** Tidak Butuh
-- **Otorisasi Role:** `PUBLIC`
+- **Endpoint:** `POST /api/upload-file/student/profile` atau `POST /api/upload-file/student/profil`
+- **Authentikasi:** Wajib (`Bearer <token>` atau cookie `access_token`)
+- **Otorisasi Role:** `USER`, `STUDENT`
 
 **Contoh Request:**
 
@@ -1552,9 +1552,9 @@ Modul ini menangani upload file statis secara lokal menggunakan Multer sebelum d
 ```json
 {
   "success": true,
-  "message": "upload profile berhasil.",
+  "message": "Upload pas foto profil berhasil.",
   "data": {
-    "profilePictureUrl": "uploads/profiles/profilePicture-1718900000-987654321.jpg"
+    "profilePictureUrl": "/api/files/profiles/profilePicture-1718900000-987654321.jpg"
   }
 }
 ```
@@ -1572,58 +1572,65 @@ Modul ini menangani upload file statis secara lokal menggunakan Multer sebelum d
 
 ### 9.2 Upload Bukti Pembayaran Siswa
 
-- **Endpoint:** `POST /api/upload-file/student/payment`
-- **Authentikasi:** Tidak Butuh
-- **Otorisasi Role:** `PUBLIC`
+- **Endpoint:** `POST /api/upload-file/student/payment` atau `POST /api/upload-file/student/pembayaran`
+- **Authentikasi:** Wajib (`Bearer <token>` atau cookie `access_token`)
+- **Otorisasi Role:** `USER`, `STUDENT`
 
 **Contoh Request:**
 
 - **Headers:** `Content-Type: multipart/form-data`
 - **Form Data (multipart):**
-  - `profilePicture`: `[Binary Image File Bukti Bayar]`
+  - `paymentProof`: `[Binary Image File Bukti Bayar]`
 
 **Contoh Response Sukses (200 OK):**
 
 ```json
 {
   "success": true,
-  "message": "File berhasil diunggah."
-}
-```
-
-**Contoh Response Gagal (400 Bad Request):**
-
-```json
-{
-  "success": false,
-  "message": "Ukuran file terlalu besar. Maksimal 5 MB."
+  "message": "Upload bukti pembayaran berhasil.",
+  "data": {
+    "paymentProofUrl": "/api/files/payments/paymentProof-1718900000-123456789.jpg"
+  }
 }
 ```
 
 ---
 
-### 9.3 Upload Dokumen Pelatih (CV & Foto)
+### 9.3 Upload Dokumen CV Pelatih
 
-- **Endpoint:** `POST /api/upload-file/instructor`
-- **Authentikasi:** Tidak Butuh
-- **Otorisasi Role:** `PUBLIC`
+- **Endpoint:** `POST /api/upload-file/instructor/cv`
+- **Authentikasi:** Wajib (`Bearer <token>` atau cookie `access_token`)
+- **Otorisasi Role:** `USER`, `INSTRUCTOR`
 
 **Contoh Request:**
 
 - **Headers:** `Content-Type: multipart/form-data`
 - **Form Data (multipart):**
-  - `cv`: `[Binary PDF File]` (Wajib PDF)
-  - `profilePicture`: `[Binary Image File]` (Wajib Gambar)
-  - `paymentProof`: `[Binary Image File]` (Opsional)
+  - `cv`: `[Binary PDF File]` (Wajib PDF asli)
 
 **Contoh Response Sukses (200 OK):**
 
 ```json
 {
   "success": true,
-  "message": "File berhasil diunggah."
+  "message": "Upload berkas CV berhasil.",
+  "data": {
+    "cvUrl": "/api/files/cvs/cv-1718900000-987654321.pdf"
+  }
 }
 ```
+
+---
+
+### 9.4 Streaming Akses Berkas (Reverse Proxy File Storage)
+
+- **Endpoint:** `GET /api/files/:folder/:filename`
+- **Authentikasi:** Publik
+- **Format Parameter:** `:folder` (`profiles`, `payments`, `cvs`) dan `:filename`
+- **Header Response:**
+  - `Content-Type`: `image/jpeg` / `image/png` / `application/pdf` (sesuai jenis berkas)
+  - `Content-Disposition`: `inline` (render langsung di browser tab baru)
+  - `Cache-Control`: `public, max-age=86400, stale-while-revalidate=604800`
 
 **Contoh Response Gagal (400 Bad Request):**
 
