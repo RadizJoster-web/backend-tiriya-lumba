@@ -6,6 +6,8 @@ export const getPackagesService = async () => {
       id: true,
       price: true,
       type: true,
+      sessionCount: true,
+      imageUrl: true,
       locationId: true,
       location: {
         select: {

@@ -39,7 +39,7 @@ export function normalizeR2Url(url?: string | null): string | null {
 
 export async function uploadToR2(
   file: Express.Multer.File,
-  folder: 'profiles' | 'payments' | 'cvs',
+  folder: 'profiles' | 'payments' | 'cvs' | 'packages',
 ): Promise<string> {
   if (!file || !file.buffer) {
     throw new AppError(400, 'Berkas tidak ditemukan atau isi berkas kosong.');

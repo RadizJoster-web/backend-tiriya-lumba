@@ -1,11 +1,12 @@
 import { Router } from 'express';
 import { upload, validateMagicBytesMiddleware } from '../middlewares/uploadMiddleware';
-import { authMiddleware } from '../middlewares/authMiddleware';
+import { authMiddleware, authorize } from '../middlewares/authMiddleware';
 
 import { uploadStudentProfile } from '../controllers/uploadController/uploadStudentProfile';
 import { uploadStudentPayment } from '../controllers/uploadController/uploadStudentPayment';
 import { uploadInstructorCv } from '../controllers/uploadController/uploadInstructorCv';
 import { uploadInstructorProfile } from '../controllers/uploadController/uploadInstructorProfile';
+import { uploadPackageImage } from '../controllers/uploadController/uploadPackageImage';
 
 const router = Router();
 
@@ -47,6 +48,17 @@ router.post(
   ]),
   validateMagicBytesMiddleware,
   uploadInstructorProfile,
+);
+
+router.post(
+  '/package',
+  authorize('ADMIN', 'POOL_MANAGER'),
+  upload.fields([
+    { name: 'image', maxCount: 1 },
+    { name: 'packageImage', maxCount: 1 },
+  ]),
+  validateMagicBytesMiddleware,
+  uploadPackageImage,
 );
 
 export default router;

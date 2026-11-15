@@ -11,6 +11,7 @@ export const createPackageSchema = z.object({
     .max(10, { message: 'Maksimal 10 pertemuan' })
     .default(4)
     .optional(),
+  imageUrl: z.string().max(500).optional().nullable(),
 });
 
 export const packageIdParamSchema = z.object({

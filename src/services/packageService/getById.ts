@@ -13,6 +13,8 @@ export const getPackageByIdService = async (params: unknown) => {
           id: true,
           type: true,
           price: true,
+          sessionCount: true,
+          imageUrl: true,
         },
       },
     },
