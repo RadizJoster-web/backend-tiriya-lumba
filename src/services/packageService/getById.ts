@@ -14,7 +14,6 @@ export const getPackageByIdService = async (params: unknown) => {
           type: true,
           price: true,
           sessionCount: true,
-          imageUrl: true,
         },
       },
     },

@@ -26,6 +26,7 @@ export const createLocationSchema = z.object({
     .refine((val) => /^https?:\/\//i.test(val), {
       message: 'URL Google Maps harus menggunakan protokol HTTP atau HTTPS',
     }),
+  imageUrl: z.string().max(500).optional().nullable(),
 });
 
 export const locationIdParamSchema = z.object({

@@ -77,6 +77,7 @@ model Location {
   name     String    @db.VarChar(100) // Contoh: "Kolam Renang Graha Raya"
   category String    @db.VarChar(50) // Kerjasama Tangerang, Non-Kerjasama, dll.
   mapUrl   String?   @db.Text
+  imageUrl String?   @db.VarChar(255)
   areaId   String?   @db.VarChar(36) // Menyimpan UUID dari tabel Area
   area     Area?     @relation(fields: [areaId], references: [id])
   packages Package[]
@@ -97,7 +98,6 @@ model Package {
   type         String   @db.VarChar(50) // Reguler, Privat, Prestasi, Ekskul
   price        Float
   sessionCount Int      @default(4) // Jumlah pertemuan per paket (1 - 10)
-  imageUrl     String?  @db.VarChar(255)
   location     Location @relation(fields: [locationId], references: [id])
 
   @@index([locationId, type])

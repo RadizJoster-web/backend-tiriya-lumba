@@ -14,6 +14,7 @@ export const getPublicLocationsService = async (query: unknown) => {
         id: true,
         name: true,
         mapUrl: true,
+        imageUrl: true,
         area: {
           select: {
             name: true,
@@ -40,6 +41,7 @@ export const getPublicLocationsService = async (query: unknown) => {
     name: loc.name,
     areaName: loc.area?.name || null,
     mapUrl: loc.mapUrl,
+    imageUrl: loc.imageUrl || null,
     regularPrice: loc.packages[0]?.price ?? null,
   }));
 

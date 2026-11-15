@@ -6,7 +6,7 @@ import { uploadStudentProfile } from '../controllers/uploadController/uploadStud
 import { uploadStudentPayment } from '../controllers/uploadController/uploadStudentPayment';
 import { uploadInstructorCv } from '../controllers/uploadController/uploadInstructorCv';
 import { uploadInstructorProfile } from '../controllers/uploadController/uploadInstructorProfile';
-import { uploadPackageImage } from '../controllers/uploadController/uploadPackageImage';
+import { uploadLocationImage } from '../controllers/uploadController/uploadLocationImage';
 
 const router = Router();
 
@@ -51,14 +51,14 @@ router.post(
 );
 
 router.post(
-  '/package',
-  authorize('ADMIN', 'POOL_MANAGER'),
+  ['/location', '/pool'],
+  authorize('ADMIN'),
   upload.fields([
     { name: 'image', maxCount: 1 },
-    { name: 'packageImage', maxCount: 1 },
+    { name: 'locationImage', maxCount: 1 },
   ]),
   validateMagicBytesMiddleware,
-  uploadPackageImage,
+  uploadLocationImage,
 );
 
 export default router;

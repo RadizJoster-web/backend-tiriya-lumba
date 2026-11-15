@@ -7,7 +7,6 @@ export const getPackagesService = async () => {
       price: true,
       type: true,
       sessionCount: true,
-      imageUrl: true,
       locationId: true,
       location: {
         select: {
@@ -15,6 +14,7 @@ export const getPackagesService = async () => {
           name: true,
           category: true,
           mapUrl: true,
+          imageUrl: true,
           area: {
             select: {
               id: true,
