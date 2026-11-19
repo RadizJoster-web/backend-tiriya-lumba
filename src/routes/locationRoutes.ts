@@ -1,6 +1,6 @@
 import { Router } from 'express';
 import { authMiddleware, authorize } from '../middlewares/authMiddleware';
-import { cachePublicCdn } from '../middlewares/cacheControl';
+import { cachePublicCdn, realTimeNoCache } from '../middlewares/cacheControl';
 
 import { getPublicLocations } from '../controllers/locationController/getPublicLocations';
 import { getLocations } from '../controllers/locationController/get';
@@ -11,10 +11,12 @@ import { deleteLocation } from '../controllers/locationController/delete';
 
 const router = Router();
 
-// Public Routes (Tier 1: Vercel CDN Cache)
+// Public Routes (Tier 1: Vercel CDN Cache untuk katalog publik)
 router.get('/public', cachePublicCdn, getPublicLocations);
-router.get('/', cachePublicCdn, getLocations);
-router.get('/:id', cachePublicCdn, getLocationById);
+
+// Real-Time Routes (No Cache agar status BUKA / TUTUP pendaftaran pelatih selalu sinkron)
+router.get('/', realTimeNoCache, getLocations);
+router.get('/:id', realTimeNoCache, getLocationById);
 
 // Private Routes
 router.post('/', authMiddleware, authorize('ADMIN'), createLocation);
