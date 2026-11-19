@@ -73,14 +73,15 @@ model Area {
 }
 
 model Location {
-  id       String    @id @default(uuid()) @db.VarChar(36)
-  name     String    @db.VarChar(100) // Contoh: "Kolam Renang Graha Raya"
-  category String    @db.VarChar(50) // Kerjasama Tangerang, Non-Kerjasama, dll.
-  mapUrl   String?   @db.Text
-  imageUrl String?   @db.VarChar(255)
-  areaId   String?   @db.VarChar(36) // Menyimpan UUID dari tabel Area
-  area     Area?     @relation(fields: [areaId], references: [id])
-  packages Package[]
+  id                      String    @id @default(uuid()) @db.VarChar(36)
+  name                    String    @db.VarChar(100) // Contoh: "Kolam Renang Graha Raya"
+  category                String    @db.VarChar(50) // Kerjasama Tangerang, Non-Kerjasama, dll.
+  mapUrl                  String?   @db.Text
+  imageUrl                String?   @db.VarChar(255)
+  isCoachRegistrationOpen Boolean   @default(true) // Status pendaftaran pelatih baru: BUKA (true) / TUTUP (false)
+  areaId                  String?   @db.VarChar(36) // Menyimpan UUID dari tabel Area
+  area                    Area?     @relation(fields: [areaId], references: [id])
+  packages                Package[]
 
   // Relasi One-to-Many (Untuk Manager/Student)
   users User[]

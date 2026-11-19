@@ -15,6 +15,7 @@ export const getPublicLocationsService = async (query: unknown) => {
         name: true,
         mapUrl: true,
         imageUrl: true,
+        isCoachRegistrationOpen: true,
         area: {
           select: {
             name: true,
@@ -42,6 +43,7 @@ export const getPublicLocationsService = async (query: unknown) => {
     areaName: loc.area?.name || null,
     mapUrl: loc.mapUrl,
     imageUrl: loc.imageUrl || null,
+    isCoachRegistrationOpen: loc.isCoachRegistrationOpen,
     regularPrice: loc.packages[0]?.price ?? null,
   }));
 

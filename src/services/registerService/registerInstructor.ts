@@ -40,13 +40,22 @@ export const registerInstructorService = async (
 
   const validLocations = await prisma.location.findMany({
     where: { id: { in: uniqueLocationIds } },
-    select: { id: true },
+    select: { id: true, name: true, isCoachRegistrationOpen: true },
   });
 
   if (validLocations.length !== uniqueLocationIds.length) {
     throw new AppError(
       404,
       'Salah satu atau lebih lokasi kolam yang dipilih tidak ditemukan.',
+    );
+  }
+
+  const closed = validLocations.filter((l) => !l.isCoachRegistrationOpen);
+  if (closed.length > 0) {
+    const names = closed.map((l) => l.name).join(', ');
+    throw new AppError(
+      400,
+      `Pendaftaran pelatih untuk kolam "${names}" sedang ditutup.`,
     );
   }
 

@@ -16,6 +16,7 @@ import attendanceRoutes from './attendanceRoutes';
 import dashboardRoutes from './dashboardRoutes';
 import statsRoutes from './statsRoutes';
 import fileRoutes from './fileRoutes';
+import monitoringRoutes from './monitoringRoutes';
 
 // Routes
 rootRouter.use('/auth', authRoutes);
@@ -35,6 +36,7 @@ rootRouter.use('/students', studentRoutes);
 rootRouter.use('/absensi', attendanceRoutes);
 rootRouter.use('/attendances', attendanceRoutes);
 rootRouter.use('/dashboard', dashboardRoutes);
+rootRouter.use('/monitoring', monitoringRoutes);
 rootRouter.use('/stats', statsRoutes);
 rootRouter.use('/public/stats', statsRoutes);
 
