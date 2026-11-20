@@ -48,5 +48,8 @@ export const corsConfig: CorsOptions = {
     'Cookie',
     'x-revalidate-secret',
     'Cache-Control',
+    'Pragma',
+    'Accept',
+    'X-Requested-With',
   ],
 };
